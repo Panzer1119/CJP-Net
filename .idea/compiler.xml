@@ -2,6 +2,8 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <bytecodeTargetLevel>
+      <module name="CJP-Net_main" target="1.8" />
+      <module name="CJP-Net_test" target="1.8" />
       <module name="net_main" target="1.8" />
       <module name="net_test" target="1.8" />
     </bytecodeTargetLevel>

@@ -2,9 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/net.iml" filepath="$PROJECT_DIR$/.idea/modules/net.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/net_main.iml" filepath="$PROJECT_DIR$/.idea/modules/net_main.iml" group="net" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/net_test.iml" filepath="$PROJECT_DIR$/.idea/modules/net_test.iml" group="net" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/CJP-Net.iml" filepath="$PROJECT_DIR$/.idea/modules/CJP-Net.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/CJP-Net_main.iml" filepath="$PROJECT_DIR$/.idea/modules/CJP-Net_main.iml" group="CJP-Net" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/CJP-Net_test.iml" filepath="$PROJECT_DIR$/.idea/modules/CJP-Net_test.iml" group="CJP-Net" />
     </modules>
   </component>
 </project>
