@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
 public class RemoteProvider extends FileProvider<AdvancedFile> {
     
     public static final String PREFIX_REMOTE = "remote:";
-    public static final String REMOTE_REGEX = PREFIX_REMOTE + "(?:(\\w+)@)?([A-Za-z0-9_\\-\\.]+)(?::(\\d{1,5}))?:(.*)";
+    public static final String REMOTE_REGEX = PREFIX_REMOTE + "(?:(\\w+)@)?([A-Za-z0-9_/&=\\-\\.\\?]+)(?::(\\d{1,5}))?:(.*)";
     public static final Pattern REMOTE_PATTERN = Pattern.compile(REMOTE_REGEX);
     
     //TODO Is this possible? Because just sending an FileProvider Object over the internet does not manage the Input/OutputStreams which would be necessary to send (encrypted!) data between the remote and this client
