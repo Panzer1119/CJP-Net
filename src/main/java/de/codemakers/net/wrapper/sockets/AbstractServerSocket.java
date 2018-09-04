@@ -132,7 +132,7 @@ public abstract class AbstractServerSocket implements Closeable, Startable, Stop
     public void stop() throws Exception {
         if (isRunning()) {
             if (thread != null) {
-                thread.interrupt();
+                thread.interrupt(); //TODO fix this, because blocking methods can not be interrupted by this
                 thread = null;
             }
             close();

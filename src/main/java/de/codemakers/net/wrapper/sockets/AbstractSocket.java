@@ -16,7 +16,6 @@
 
 package de.codemakers.net.wrapper.sockets;
 
-import de.codemakers.base.exceptions.NotYetImplementedRuntimeException;
 import de.codemakers.base.logger.Logger;
 import de.codemakers.base.util.interfaces.Startable;
 import de.codemakers.base.util.interfaces.Stoppable;
@@ -24,6 +23,7 @@ import de.codemakers.base.util.interfaces.Stoppable;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.nio.channels.AlreadyBoundException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class AbstractSocket implements Closeable, Startable, Stoppable {
@@ -141,22 +141,42 @@ public abstract class AbstractSocket implements Closeable, Startable, Stoppable 
         return this;
     }
     
+    private boolean initSocket() throws IOException {
+        if (socket != null) {
+            return false;
+        }
+        socket = new Socket(inetAddress, port);
+        return true;
+    }
+    
     @Override
     public void start() throws Exception {
-        //TODO Implement
-        throw new NotYetImplementedRuntimeException();
+        if (isRunning()) {
+            throw new AlreadyBoundException();
+        }
+        if (socket == null) {
+            initSocket();
+        }
+        startThread();
     }
     
     @Override
     public void stop() throws Exception {
-        //TODO Implement
-        throw new NotYetImplementedRuntimeException();
+        if (isRunning()) {
+            if (thread != null) {
+                thread.interrupt(); //TODO fix this, because blocking methods can not be interrupted by this
+                thread = null;
+            }
+            close();
+        }
+        running.set(false);
     }
     
     @Override
     public void close() throws IOException {
-        //TODO Implement
-        throw new NotYetImplementedRuntimeException();
+        if (socket != null) {
+            socket.close();
+        }
     }
     
 }
