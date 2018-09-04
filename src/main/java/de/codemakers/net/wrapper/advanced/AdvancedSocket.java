@@ -26,11 +26,33 @@ import de.codemakers.net.events.ClientEvent;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.Socket;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AdvancedSocket implements Closeable, IEventHandler<ClientEvent>, Startable, Stoppable {
     
     private final EventHandler<ClientEvent> clientEventHandler = new EventHandler<>();
+    
+    private InetAddress inetAddress = null;
+    private int port = -1;
+    private Socket socket = null;
+    private Thread thread = null;
+    private AtomicBoolean running = new AtomicBoolean(false);
+    
+    public AdvancedSocket(Socket socket) {
+        this.socket = socket;
+        if (socket != null) {
+            inetAddress = socket.getInetAddress();
+            port = socket.getPort();
+        }
+    }
+    
+    public AdvancedSocket(InetAddress inetAddress, int port) {
+        this.inetAddress = inetAddress;
+        this.port = port;
+    }
     
     @Override
     public IEventHandler<ClientEvent> addEventListener(Class<ClientEvent> aClass, EventListener<ClientEvent> eventListener) {
@@ -55,6 +77,37 @@ public class AdvancedSocket implements Closeable, IEventHandler<ClientEvent>, St
     @Override
     public void onEvent(ClientEvent clientEvent) {
         clientEventHandler.onEvent(clientEvent);
+    }
+    
+    public final boolean isRunning() {
+        return running.get();
+    }
+    
+    public final InetAddress getInetAddress() {
+        return inetAddress;
+    }
+    
+    public final AdvancedSocket setInetAddress(InetAddress inetAddress) {
+        this.inetAddress = inetAddress;
+        return this;
+    }
+    
+    public final int getPort() {
+        return port;
+    }
+    
+    public final AdvancedSocket setPort(int port) {
+        this.port = port;
+        return this;
+    }
+    
+    public final Socket getSocket() {
+        return socket;
+    }
+    
+    public final AdvancedSocket setSocket(Socket socket) {
+        this.socket = socket;
+        return this;
     }
     
     @Override
