@@ -19,9 +19,9 @@ package de.codemakers.net.wrapper.sockets;
 import de.codemakers.base.events.EventHandler;
 import de.codemakers.base.events.EventListener;
 import de.codemakers.base.events.IEventHandler;
-import de.codemakers.net.events.DataReceivedEvent;
 import de.codemakers.net.events.DisconnectedEvent;
 import de.codemakers.net.events.NetEvent;
+import de.codemakers.net.events.ObjectReceived;
 
 import java.net.InetAddress;
 import java.net.Socket;
@@ -65,8 +65,8 @@ public class AdvancedSocket extends AbstractSocket implements IEventHandler<NetE
     }
     
     @Override
-    protected void processInput(long timestamp, byte[] data) throws Exception {
-        onEvent(new DataReceivedEvent(timestamp, data));
+    protected void processInput(long timestamp, Object input) throws Exception {
+        onEvent(new ObjectReceived(timestamp, input));
     }
     
     @Override

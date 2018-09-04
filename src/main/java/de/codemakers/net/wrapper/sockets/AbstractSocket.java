@@ -17,11 +17,11 @@
 package de.codemakers.net.wrapper.sockets;
 
 import de.codemakers.base.exceptions.NotYetImplementedRuntimeException;
+import de.codemakers.base.logger.Logger;
 import de.codemakers.base.util.interfaces.Startable;
 import de.codemakers.base.util.interfaces.Stoppable;
 
-import java.io.Closeable;
-import java.io.IOException;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -33,6 +33,8 @@ public abstract class AbstractSocket implements Closeable, Startable, Stoppable 
     private Socket socket = null;
     private Thread thread = null;
     private AtomicBoolean running = new AtomicBoolean(false);
+    private InputStream inputStream;
+    private OutputStream outputStream;
     
     public AbstractSocket(Socket socket) {
         this.socket = socket;
@@ -47,9 +49,48 @@ public abstract class AbstractSocket implements Closeable, Startable, Stoppable 
         this.port = port;
     }
     
-    protected abstract void processInput(long timestamp, byte[] data) throws Exception;
+    protected abstract void processInput(long timestamp, Object input) throws Exception;
     
     protected abstract void processDisconnect(long timestamp, boolean ok, boolean local, Throwable throwable) throws Exception;
+    
+    private final boolean initThread() {
+        if (thread != null) {
+            return false;
+        }
+        thread = new Thread(() -> {
+            running.set(true);
+            try {
+                final ObjectInputStream objectInputStream = new ObjectInputStream(socket.getInputStream());
+                Object object = null;
+                while (isRunning() || (object = objectInputStream.readObject()) != null) {
+                    final long timestamp = System.currentTimeMillis();
+                    try {
+                        processInput(timestamp, object);
+                    } catch (Exception ex) {
+                        Logger.handleError(ex);
+                    }
+                }
+            } catch (Exception ex) {
+                running.set(false);
+                Logger.handleError(ex); //TODO ignore the Exceptions thrown, if the ServerSocket was stopped by user
+            }
+        });
+        return true;
+    }
+    
+    public final boolean startThread() {
+        if (isRunning()) {
+            return false;
+        }
+        if (thread == null) {
+            initThread();
+        }
+        if (socket == null) {
+            throw new IllegalArgumentException("Socket was not created");
+        }
+        thread.start();
+        return true;
+    }
     
     public final boolean isRunning() {
         return running.get();
@@ -79,6 +120,24 @@ public abstract class AbstractSocket implements Closeable, Startable, Stoppable 
     
     public final AbstractSocket setSocket(Socket socket) {
         this.socket = socket;
+        return this;
+    }
+    
+    public final InputStream getInputStream() {
+        return inputStream;
+    }
+    
+    public final AbstractSocket setInputStream(InputStream inputStream) {
+        this.inputStream = inputStream;
+        return this;
+    }
+    
+    public final OutputStream getOutputStream() {
+        return outputStream;
+    }
+    
+    public final AbstractSocket setOutputStream(OutputStream outputStream) {
+        this.outputStream = outputStream;
         return this;
     }
     
