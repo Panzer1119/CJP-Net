@@ -38,7 +38,7 @@ public class AdvancedServerSocket extends AbstractServerSocket implements IEvent
     }
     
     @Override
-    protected void processSocket(Socket socket, long timestamp) throws Exception {
+    protected void processSocket(long timestamp, Socket socket) throws Exception {
         onEvent(new SocketAcceptedEvent(timestamp, socket));
     }
     
