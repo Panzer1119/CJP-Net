@@ -82,7 +82,7 @@ public class AdvancedServerSocket implements IEventHandler<SocketAcceptedEvent> 
                 while (isRunning()) {
                     final Socket socket = serverSocket.accept();
                     if (socket != null) {
-                    
+                        socketAcceptedEventHandler.onEvent(new SocketAcceptedEvent(socket));
                     }
                 }
             } catch (Exception ex) {
