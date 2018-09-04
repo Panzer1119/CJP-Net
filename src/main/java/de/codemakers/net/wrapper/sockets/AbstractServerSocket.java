@@ -24,6 +24,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.channels.AlreadyBoundException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -65,6 +66,8 @@ public abstract class AbstractServerSocket implements Closeable, Startable, Stop
                         }
                     }
                 }
+            } catch (SocketException ex) {
+                ex.printStackTrace(); //TODO distinguish HERE between local or remote disconnection (using StackTrace and searching if a close method from THIS or any super/sub class caused this Exception)
             } catch (Exception ex) {
                 running.set(false);
                 Logger.handleError(ex); //TODO ignore the Exceptions thrown, if the ServerSocket was stopped by user
