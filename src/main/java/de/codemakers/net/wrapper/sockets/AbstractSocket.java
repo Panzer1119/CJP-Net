@@ -17,6 +17,8 @@
 package de.codemakers.net.wrapper.sockets;
 
 import de.codemakers.base.logger.Logger;
+import de.codemakers.base.util.interfaces.Connectable;
+import de.codemakers.base.util.interfaces.Disconnectable;
 import de.codemakers.base.util.interfaces.Startable;
 import de.codemakers.base.util.interfaces.Stoppable;
 
@@ -27,7 +29,7 @@ import java.net.SocketException;
 import java.nio.channels.AlreadyBoundException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public abstract class AbstractSocket implements Closeable, Startable, Stoppable {
+public abstract class AbstractSocket implements Closeable, Connectable, Disconnectable, Startable, Stoppable {
     
     private InetAddress inetAddress = null;
     private int port = -1;
@@ -157,23 +159,43 @@ public abstract class AbstractSocket implements Closeable, Startable, Stoppable 
         return true;
     }
     
-    public void connect() {
-    
-    }
-    
     @Override
-    public void start() throws Exception {
+    public boolean connect() throws Exception {
         if (isRunning()) {
-            throw new AlreadyBoundException();
+            return false;
         }
         if (socket == null) {
             initSocket();
         }
-        startThread();
+        return socket != null && socket.isConnected(); //TODO Test this
     }
     
     @Override
-    public void stop() throws Exception {
+    public boolean disconnect() throws Exception {
+        if (!isRunning()) {
+            return false;
+        }
+        if (socket != null) {
+            close();
+            socket = null;
+        }
+        return socket == null;
+    }
+    
+    @Override
+    public boolean start() throws Exception {
+        if (isRunning()) {
+            throw new AlreadyBoundException();
+        }
+        if (!connect()) {
+            return false;
+        }
+        startThread();
+        return true;
+    }
+    
+    @Override
+    public boolean stop() throws Exception {
         if (isRunning()) {
             /*
             if (thread != null) {
@@ -181,13 +203,18 @@ public abstract class AbstractSocket implements Closeable, Startable, Stoppable 
                 thread = null;
             }
             */
-            close();
+            if (!disconnect()) {
+                return false;
+            }
             if (thread != null) {
                 thread.interrupt();
                 thread = null;
             }
+        } else {
+            return false;
         }
         running.set(false);
+        return true;
     }
     
     @Override

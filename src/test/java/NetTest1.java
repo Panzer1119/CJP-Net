@@ -14,21 +14,62 @@
  *     limitations under the License.
  */
 
+import de.codemakers.base.logger.Logger;
+import de.codemakers.net.events.SocketAcceptedEvent;
 import de.codemakers.net.wrapper.sockets.AdvancedServerSocket;
 import de.codemakers.net.wrapper.sockets.AdvancedSocket;
 
+import java.io.ObjectOutputStream;
 import java.net.InetAddress;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class NetTest1 {
     
     public static final int PORT = 1234;
     
     public static final void main(String[] args) throws Exception {
-        System.out.println("Test");
+        final long start = System.currentTimeMillis();
+        System.out.println("Test started: " + start);
         final AdvancedServerSocket advancedServerSocket = new AdvancedServerSocket(PORT);
+        advancedServerSocket.addEventListener(SocketAcceptedEvent.class, (socketAcceptedEvent) -> {
+            System.out.println("[SERVER] Socket accepted: " + socketAcceptedEvent.getSocket());
+            try {
+                final ObjectOutputStream objectOutputStream = new ObjectOutputStream(socketAcceptedEvent.getSocket().getOutputStream());
+                objectOutputStream.writeObject("[SERVER] -> [CLIENT]: Hi from me! I accepted you!");
+            } catch (Exception ex) {
+                Logger.handleError(ex);
+            }
+        });
         advancedServerSocket.start(Throwable::printStackTrace);
         final AdvancedSocket advancedSocket = new AdvancedSocket(InetAddress.getLocalHost(), PORT);
-        
+        /*
+        advancedSocket.addEventListener(ObjectReceived.class, (objectReceivedEvent) -> {
+            System.out.println("[CLIENT]: " + objectReceivedEvent);
+        });
+        */
+        //System.out.println("Connected: " + advancedSocket.connect());
+        System.out.println("Started: " + advancedSocket.start());
+        new Timer().schedule(new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    advancedSocket.stop();
+                    Thread.sleep(1000);
+                } catch (Exception ex) {
+                    Logger.handleError(ex);
+                }
+                try {
+                    advancedServerSocket.stop();
+                    Thread.sleep(2000);
+                } catch (Exception ex) {
+                    Logger.handleError(ex);
+                }
+                System.exit(0);
+                final long duration = System.currentTimeMillis() - start;
+                System.out.println("Test finished: " + duration + "ms");
+            }
+        }, 30000);
     }
     
 }

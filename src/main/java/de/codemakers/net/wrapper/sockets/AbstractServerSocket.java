@@ -121,7 +121,7 @@ public abstract class AbstractServerSocket implements Closeable, Startable, Stop
     }
     
     @Override
-    public void start() throws Exception {
+    public boolean start() throws Exception {
         if (isRunning()) {
             throw new AlreadyBoundException();
         }
@@ -129,18 +129,22 @@ public abstract class AbstractServerSocket implements Closeable, Startable, Stop
             initServerSocket();
         }
         startThread();
+        return true;
     }
     
     @Override
-    public void stop() throws Exception {
+    public boolean stop() throws Exception {
         if (isRunning()) {
             if (thread != null) {
                 thread.interrupt(); //TODO fix this, because blocking methods can not be interrupted by this
                 thread = null;
             }
             close();
+        } else {
+            return false;
         }
         running.set(false);
+        return true;
     }
     
     @Override
