@@ -29,6 +29,16 @@ public class SocketAcceptedEvent extends ConnectionEvent {
         this.socket = socket;
     }
     
+    public SocketAcceptedEvent(long timestamp, Socket socket) {
+        super(timestamp, socket.getInetAddress(), socket.getPort());
+        this.socket = socket;
+    }
+    
+    public SocketAcceptedEvent(long id, long timestamp, Socket socket) {
+        super(id, timestamp, socket.getInetAddress(), socket.getPort());
+        this.socket = socket;
+    }
+    
     public final Socket getSocket() {
         return socket;
     }
@@ -49,7 +59,7 @@ public class SocketAcceptedEvent extends ConnectionEvent {
     
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "{" + "socket=" + socket + ", inetAddress=" + inetAddress + ", port=" + port + ", id=" + id + '}';
+        return getClass().getSimpleName() + "{" + "socket=" + socket + ", inetAddress=" + inetAddress + ", port=" + port + ", id=" + id + ", timestamp=" + timestamp + '}';
     }
     
     @Override

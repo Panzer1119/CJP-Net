@@ -16,50 +16,40 @@
 
 package de.codemakers.net.events;
 
-import de.codemakers.base.events.Event;
+import java.util.Arrays;
 
-import java.net.InetAddress;
-import java.util.Objects;
-
-public class ConnectionEvent extends Event {
+public class DataReceivedEvent extends ClientEvent {
     
-    protected final InetAddress inetAddress;
-    protected final int port;
+    private final byte[] data;
     
-    public ConnectionEvent(InetAddress inetAddress, int port) {
-        super();
-        this.inetAddress = inetAddress;
-        this.port = port;
+    public DataReceivedEvent(byte[] data) {
+        this.data = data;
     }
     
-    public ConnectionEvent(long timestamp, InetAddress inetAddress, int port) {
+    public DataReceivedEvent(long timestamp, byte[] data) {
         super(timestamp);
-        this.inetAddress = inetAddress;
-        this.port = port;
+        this.data = data;
     }
     
-    public ConnectionEvent(long id, long timestamp, InetAddress inetAddress, int port) {
+    public DataReceivedEvent(long id, long timestamp, byte[] data) {
         super(id, timestamp);
-        this.inetAddress = inetAddress;
-        this.port = port;
+        this.data = data;
     }
     
-    public final InetAddress getInetAddress() {
-        return inetAddress;
-    }
-    
-    public final int getPort() {
-        return port;
+    public final byte[] getData() {
+        return data;
     }
     
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "{" + "inetAddress=" + inetAddress + ", port=" + port + ", id=" + id + ", timestamp=" + timestamp + '}';
+        return getClass().getSimpleName() + "{" + "data=" + Arrays.toString(data) + ", id=" + id + ", timestamp=" + timestamp + '}';
     }
     
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), inetAddress, port);
+        int result = super.hashCode();
+        result = 31 * result + Arrays.hashCode(data);
+        return result;
     }
     
     @Override
@@ -73,8 +63,8 @@ public class ConnectionEvent extends Event {
         if (!super.equals(o)) {
             return false;
         }
-        final ConnectionEvent that = (ConnectionEvent) o;
-        return port == that.port && Objects.equals(inetAddress, that.inetAddress);
+        final DataReceivedEvent that = (DataReceivedEvent) o;
+        return Arrays.equals(data, that.data);
     }
     
 }
