@@ -16,8 +16,117 @@
 
 package de.codemakers.net.wrapper;
 
-public class AdvancedServerSocket {
+import de.codemakers.base.events.EventHandler;
+import de.codemakers.base.events.EventListener;
+import de.codemakers.base.events.IEventHandler;
+import de.codemakers.base.logger.Logger;
+import de.codemakers.net.events.SocketAcceptedEvent;
 
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-
+public class AdvancedServerSocket implements IEventHandler<SocketAcceptedEvent> {
+    
+    private final EventHandler<SocketAcceptedEvent> socketAcceptedEventHandler = new EventHandler<>();
+    
+    private int port = -1;
+    private ServerSocket serverSocket = null;
+    private Thread thread = null;
+    private AtomicBoolean running = new AtomicBoolean(false);
+    
+    public AdvancedServerSocket(ServerSocket serverSocket) {
+        this.serverSocket = serverSocket;
+        if (serverSocket != null) {
+            port = serverSocket.getLocalPort();
+        }
+    }
+    
+    public AdvancedServerSocket(int port) {
+        this.port = port;
+    }
+    
+    @Override
+    public final IEventHandler<SocketAcceptedEvent> addEventListener(Class<SocketAcceptedEvent> aClass, EventListener<SocketAcceptedEvent> eventListener) {
+        return socketAcceptedEventHandler.addEventListener(aClass, eventListener);
+    }
+    
+    @Override
+    public final IEventHandler<SocketAcceptedEvent> removeEventListener(Class<SocketAcceptedEvent> aClass, EventListener<SocketAcceptedEvent> eventListener) {
+        return socketAcceptedEventHandler.removeEventListener(aClass, eventListener);
+    }
+    
+    @Override
+    public final IEventHandler<SocketAcceptedEvent> clearEventListeners() {
+        return socketAcceptedEventHandler.clearEventListeners();
+    }
+    
+    @Override
+    public final List<EventListener<SocketAcceptedEvent>> getEventListeners(Class<SocketAcceptedEvent> aClass) {
+        return socketAcceptedEventHandler.getEventListeners(aClass);
+    }
+    
+    @Override
+    public final void onEvent(SocketAcceptedEvent socketAcceptedEvent) {
+        socketAcceptedEventHandler.onEvent(socketAcceptedEvent);
+    }
+    
+    private final boolean initThread() {
+        if (thread != null) {
+            return false;
+        }
+        thread = new Thread(() -> {
+            running.set(true);
+            try {
+                while (isRunning()) {
+                    final Socket socket = serverSocket.accept();
+                    if (socket != null) {
+                    
+                    }
+                }
+            } catch (Exception ex) {
+                running.set(false);
+                Logger.handleError(ex);
+            }
+        });
+        return true;
+    }
+    
+    public final boolean startThread() {
+        if (isRunning()) {
+            return false;
+        }
+        if (thread == null) {
+            initThread();
+        }
+        if (serverSocket == null) {
+            throw new IllegalArgumentException("ServerSocket was not created");
+        }
+        thread.start();
+        return true;
+    }
+    
+    public final boolean isRunning() {
+        return running.get();
+    }
+    
+    public final int getPort() {
+        return port;
+    }
+    
+    public final AdvancedServerSocket setPort(int port) {
+        this.port = port;
+        return this;
+    }
+    
+    public final ServerSocket getServerSocket() {
+        return serverSocket;
+    }
+    
+    public final AdvancedServerSocket setServerSocket(ServerSocket serverSocket) {
+        this.serverSocket = serverSocket;
+        return this;
+    }
+    
 }
