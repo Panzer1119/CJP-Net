@@ -14,68 +14,38 @@
  *     limitations under the License.
  */
 
-package de.codemakers.net.wrapper.advanced;
+package de.codemakers.net.wrapper.sockets;
 
-import de.codemakers.base.events.EventHandler;
-import de.codemakers.base.events.EventListener;
-import de.codemakers.base.events.IEventHandler;
 import de.codemakers.base.logger.Logger;
 import de.codemakers.base.util.interfaces.Startable;
 import de.codemakers.base.util.interfaces.Stoppable;
-import de.codemakers.net.events.SocketAcceptedEvent;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.channels.AlreadyBoundException;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class AdvancedServerSocket implements Closeable, IEventHandler<SocketAcceptedEvent>, Startable, Stoppable {
-    
-    private final EventHandler<SocketAcceptedEvent> socketAcceptedEventHandler = new EventHandler<>();
+public abstract class AbstractServerSocket implements Closeable, Startable, Stoppable {
     
     private int port = -1;
     private ServerSocket serverSocket = null;
     private Thread thread = null;
     private AtomicBoolean running = new AtomicBoolean(false);
     
-    public AdvancedServerSocket(ServerSocket serverSocket) {
+    public AbstractServerSocket(ServerSocket serverSocket) {
         this.serverSocket = serverSocket;
         if (serverSocket != null) {
             port = serverSocket.getLocalPort();
         }
     }
     
-    public AdvancedServerSocket(int port) {
+    public AbstractServerSocket(int port) {
         this.port = port;
     }
     
-    @Override
-    public final IEventHandler<SocketAcceptedEvent> addEventListener(Class<SocketAcceptedEvent> aClass, EventListener<SocketAcceptedEvent> eventListener) {
-        return socketAcceptedEventHandler.addEventListener(aClass, eventListener);
-    }
-    
-    @Override
-    public final IEventHandler<SocketAcceptedEvent> removeEventListener(Class<SocketAcceptedEvent> aClass, EventListener<SocketAcceptedEvent> eventListener) {
-        return socketAcceptedEventHandler.removeEventListener(aClass, eventListener);
-    }
-    
-    @Override
-    public final IEventHandler<SocketAcceptedEvent> clearEventListeners() {
-        return socketAcceptedEventHandler.clearEventListeners();
-    }
-    
-    @Override
-    public final List<EventListener<SocketAcceptedEvent>> getEventListeners(Class<SocketAcceptedEvent> aClass) {
-        return socketAcceptedEventHandler.getEventListeners(aClass);
-    }
-    
-    @Override
-    public final void onEvent(SocketAcceptedEvent socketAcceptedEvent) {
-        socketAcceptedEventHandler.onEvent(socketAcceptedEvent);
-    }
+    protected abstract void processSocket(Socket socket, long timestamp) throws Exception;
     
     private final boolean initThread() {
         if (thread != null) {
@@ -86,8 +56,13 @@ public class AdvancedServerSocket implements Closeable, IEventHandler<SocketAcce
             try {
                 while (isRunning()) {
                     final Socket socket = serverSocket.accept();
+                    final long timestamp = System.currentTimeMillis();
                     if (socket != null) {
-                        socketAcceptedEventHandler.onEvent(new SocketAcceptedEvent(socket));
+                        try {
+                            processSocket(socket, timestamp);
+                        } catch (Exception ex) {
+                            Logger.handleError(ex);
+                        }
                     }
                 }
             } catch (Exception ex) {
@@ -120,7 +95,7 @@ public class AdvancedServerSocket implements Closeable, IEventHandler<SocketAcce
         return port;
     }
     
-    public final AdvancedServerSocket setPort(int port) {
+    public final AbstractServerSocket setPort(int port) {
         this.port = port;
         return this;
     }
@@ -129,7 +104,7 @@ public class AdvancedServerSocket implements Closeable, IEventHandler<SocketAcce
         return serverSocket;
     }
     
-    public final AdvancedServerSocket setServerSocket(ServerSocket serverSocket) {
+    public final AbstractServerSocket setServerSocket(ServerSocket serverSocket) {
         this.serverSocket = serverSocket;
         return this;
     }
