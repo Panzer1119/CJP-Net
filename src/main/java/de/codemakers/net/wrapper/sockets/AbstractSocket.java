@@ -72,6 +72,11 @@ public abstract class AbstractSocket implements Closeable, Startable, Stoppable 
                 }
             } catch (Exception ex) {
                 running.set(false);
+                try {
+                    processDisconnect(System.currentTimeMillis(), false, false, ex);
+                } catch (Exception ex2) {
+                    Logger.handleError(ex2);
+                }
                 Logger.handleError(ex); //TODO ignore the Exceptions thrown, if the ServerSocket was stopped by user
             }
         });
