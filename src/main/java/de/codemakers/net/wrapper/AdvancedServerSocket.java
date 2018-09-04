@@ -20,14 +20,19 @@ import de.codemakers.base.events.EventHandler;
 import de.codemakers.base.events.EventListener;
 import de.codemakers.base.events.IEventHandler;
 import de.codemakers.base.logger.Logger;
+import de.codemakers.base.util.interfaces.Startable;
+import de.codemakers.base.util.interfaces.Stoppable;
 import de.codemakers.net.events.SocketAcceptedEvent;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.channels.AlreadyBoundException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class AdvancedServerSocket implements IEventHandler<SocketAcceptedEvent> {
+public class AdvancedServerSocket implements Closeable, IEventHandler<SocketAcceptedEvent>, Startable, Stoppable {
     
     private final EventHandler<SocketAcceptedEvent> socketAcceptedEventHandler = new EventHandler<>();
     
@@ -127,6 +132,44 @@ public class AdvancedServerSocket implements IEventHandler<SocketAcceptedEvent> 
     public final AdvancedServerSocket setServerSocket(ServerSocket serverSocket) {
         this.serverSocket = serverSocket;
         return this;
+    }
+    
+    private boolean initServerSocket() throws IOException {
+        if (serverSocket != null) {
+            return false;
+        }
+        serverSocket = new ServerSocket(port);
+        return true;
+    }
+    
+    @Override
+    public void start() throws Exception {
+        if (isRunning()) {
+            throw new AlreadyBoundException();
+        }
+        if (serverSocket == null) {
+            initServerSocket();
+        }
+        startThread();
+    }
+    
+    @Override
+    public void stop() throws Exception {
+        if (isRunning()) {
+            if (thread != null) {
+                thread.interrupt();
+                thread = null;
+            }
+            close();
+        }
+        running.set(false);
+    }
+    
+    @Override
+    public void close() throws IOException {
+        if (serverSocket != null) {
+            serverSocket.close();
+        }
     }
     
 }
