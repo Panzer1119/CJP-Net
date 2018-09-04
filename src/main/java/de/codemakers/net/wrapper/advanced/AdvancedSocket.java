@@ -22,7 +22,7 @@ import de.codemakers.base.events.IEventHandler;
 import de.codemakers.base.exceptions.NotYetImplementedRuntimeException;
 import de.codemakers.base.util.interfaces.Startable;
 import de.codemakers.base.util.interfaces.Stoppable;
-import de.codemakers.net.events.ClientEvent;
+import de.codemakers.net.events.NetEvent;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -31,9 +31,9 @@ import java.net.Socket;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class AdvancedSocket implements Closeable, IEventHandler<ClientEvent>, Startable, Stoppable {
+public class AdvancedSocket implements Closeable, IEventHandler<NetEvent>, Startable, Stoppable {
     
-    private final EventHandler<ClientEvent> clientEventHandler = new EventHandler<>();
+    private final EventHandler<NetEvent> netEventHandler = new EventHandler<>();
     
     private InetAddress inetAddress = null;
     private int port = -1;
@@ -55,28 +55,28 @@ public class AdvancedSocket implements Closeable, IEventHandler<ClientEvent>, St
     }
     
     @Override
-    public IEventHandler<ClientEvent> addEventListener(Class<ClientEvent> aClass, EventListener<ClientEvent> eventListener) {
-        return clientEventHandler.addEventListener(aClass, eventListener);
+    public IEventHandler<NetEvent> addEventListener(Class<NetEvent> aClass, EventListener<NetEvent> eventListener) {
+        return netEventHandler.addEventListener(aClass, eventListener);
     }
     
     @Override
-    public IEventHandler<ClientEvent> removeEventListener(Class<ClientEvent> aClass, EventListener<ClientEvent> eventListener) {
-        return clientEventHandler.removeEventListener(aClass, eventListener);
+    public IEventHandler<NetEvent> removeEventListener(Class<NetEvent> aClass, EventListener<NetEvent> eventListener) {
+        return netEventHandler.removeEventListener(aClass, eventListener);
     }
     
     @Override
-    public IEventHandler<ClientEvent> clearEventListeners() {
-        return clientEventHandler.clearEventListeners();
+    public IEventHandler<NetEvent> clearEventListeners() {
+        return netEventHandler.clearEventListeners();
     }
     
     @Override
-    public List<EventListener<ClientEvent>> getEventListeners(Class<ClientEvent> aClass) {
-        return clientEventHandler.getEventListeners(aClass);
+    public List<EventListener<NetEvent>> getEventListeners(Class<NetEvent> aClass) {
+        return netEventHandler.getEventListeners(aClass);
     }
     
     @Override
-    public void onEvent(ClientEvent clientEvent) {
-        clientEventHandler.onEvent(clientEvent);
+    public void onEvent(NetEvent netEvent) {
+        netEventHandler.onEvent(netEvent);
     }
     
     public final boolean isRunning() {

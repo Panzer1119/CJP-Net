@@ -16,17 +16,19 @@
 
 package de.codemakers.net.events;
 
-public class ClientEvent extends NetEvent {
+import de.codemakers.base.events.Event;
+
+public class NetEvent extends Event {
     
-    public ClientEvent() {
+    public NetEvent() {
         super();
     }
     
-    public ClientEvent(long timestamp) {
+    public NetEvent(long timestamp) {
         super(timestamp);
     }
     
-    public ClientEvent(long id, long timestamp) {
+    public NetEvent(long id, long timestamp) {
         super(id, timestamp);
     }
     
