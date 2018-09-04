@@ -14,10 +14,21 @@
  *     limitations under the License.
  */
 
+import de.codemakers.net.wrapper.sockets.AdvancedServerSocket;
+import de.codemakers.net.wrapper.sockets.AdvancedSocket;
+
+import java.net.InetAddress;
+
 public class NetTest1 {
     
-    public static final void main(String[] args) {
+    public static final int PORT = 1234;
+    
+    public static final void main(String[] args) throws Exception {
         System.out.println("Test");
+        final AdvancedServerSocket advancedServerSocket = new AdvancedServerSocket(PORT);
+        advancedServerSocket.start(Throwable::printStackTrace);
+        final AdvancedSocket advancedSocket = new AdvancedSocket(InetAddress.getLocalHost(), PORT);
+        
     }
     
 }

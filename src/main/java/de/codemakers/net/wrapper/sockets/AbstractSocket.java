@@ -157,6 +157,10 @@ public abstract class AbstractSocket implements Closeable, Startable, Stoppable 
         return true;
     }
     
+    public void connect() {
+    
+    }
+    
     @Override
     public void start() throws Exception {
         if (isRunning()) {
@@ -171,11 +175,17 @@ public abstract class AbstractSocket implements Closeable, Startable, Stoppable 
     @Override
     public void stop() throws Exception {
         if (isRunning()) {
+            /*
             if (thread != null) {
                 thread.interrupt(); //TODO fix this, because blocking methods can not be interrupted by this
                 thread = null;
             }
+            */
             close();
+            if (thread != null) {
+                thread.interrupt();
+                thread = null;
+            }
         }
         running.set(false);
     }
