@@ -23,6 +23,7 @@ import de.codemakers.base.util.interfaces.Stoppable;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.channels.AlreadyBoundException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -70,6 +71,8 @@ public abstract class AbstractSocket implements Closeable, Startable, Stoppable 
                         Logger.handleError(ex);
                     }
                 }
+            } catch (SocketException ex) {
+                ex.printStackTrace(); //TODO distinguish HERE between local or remote disconnection (using StackTrace and searching if a close method from THIS or any super/sub class caused this Exception)
             } catch (Exception ex) {
                 running.set(false);
                 try {
