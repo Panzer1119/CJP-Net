@@ -87,7 +87,7 @@ public class AdvancedServerSocket implements IEventHandler<SocketAcceptedEvent> 
                 }
             } catch (Exception ex) {
                 running.set(false);
-                Logger.handleError(ex);
+                Logger.handleError(ex); //TODO ignore the Exceptions thrown, if the ServerSocket was stopped by user
             }
         });
         return true;
