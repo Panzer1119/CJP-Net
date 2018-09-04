@@ -45,7 +45,7 @@ public abstract class AbstractServerSocket implements Closeable, Startable, Stop
         this.port = port;
     }
     
-    protected abstract void processSocket(Socket socket, long timestamp) throws Exception;
+    protected abstract void processSocket(long timestamp, Socket socket) throws Exception;
     
     private final boolean initThread() {
         if (thread != null) {
@@ -59,7 +59,7 @@ public abstract class AbstractServerSocket implements Closeable, Startable, Stop
                     final long timestamp = System.currentTimeMillis();
                     if (socket != null) {
                         try {
-                            processSocket(socket, timestamp);
+                            processSocket(timestamp, socket);
                         } catch (Exception ex) {
                             Logger.handleError(ex);
                         }

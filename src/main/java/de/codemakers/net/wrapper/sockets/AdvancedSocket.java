@@ -19,39 +19,24 @@ package de.codemakers.net.wrapper.sockets;
 import de.codemakers.base.events.EventHandler;
 import de.codemakers.base.events.EventListener;
 import de.codemakers.base.events.IEventHandler;
-import de.codemakers.base.exceptions.NotYetImplementedRuntimeException;
-import de.codemakers.base.util.interfaces.Startable;
-import de.codemakers.base.util.interfaces.Stoppable;
+import de.codemakers.net.events.DataReceivedEvent;
+import de.codemakers.net.events.DisconnectedEvent;
 import de.codemakers.net.events.NetEvent;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
-public class AdvancedSocket implements Closeable, IEventHandler<NetEvent>, Startable, Stoppable {
+public class AdvancedSocket extends AbstractSocket implements IEventHandler<NetEvent> {
     
     private final EventHandler<NetEvent> netEventHandler = new EventHandler<>();
     
-    private InetAddress inetAddress = null;
-    private int port = -1;
-    private Socket socket = null;
-    private Thread thread = null;
-    private AtomicBoolean running = new AtomicBoolean(false);
-    
     public AdvancedSocket(Socket socket) {
-        this.socket = socket;
-        if (socket != null) {
-            inetAddress = socket.getInetAddress();
-            port = socket.getPort();
-        }
+        super(socket);
     }
     
     public AdvancedSocket(InetAddress inetAddress, int port) {
-        this.inetAddress = inetAddress;
-        this.port = port;
+        super(inetAddress, port);
     }
     
     @Override
@@ -79,53 +64,14 @@ public class AdvancedSocket implements Closeable, IEventHandler<NetEvent>, Start
         netEventHandler.onEvent(netEvent);
     }
     
-    public final boolean isRunning() {
-        return running.get();
-    }
-    
-    public final InetAddress getInetAddress() {
-        return inetAddress;
-    }
-    
-    public final AdvancedSocket setInetAddress(InetAddress inetAddress) {
-        this.inetAddress = inetAddress;
-        return this;
-    }
-    
-    public final int getPort() {
-        return port;
-    }
-    
-    public final AdvancedSocket setPort(int port) {
-        this.port = port;
-        return this;
-    }
-    
-    public final Socket getSocket() {
-        return socket;
-    }
-    
-    public final AdvancedSocket setSocket(Socket socket) {
-        this.socket = socket;
-        return this;
+    @Override
+    protected void processInput(long timestamp, byte[] data) throws Exception {
+        onEvent(new DataReceivedEvent(timestamp, data));
     }
     
     @Override
-    public void start() throws Exception {
-        //TODO Implement
-        throw new NotYetImplementedRuntimeException();
-    }
-    
-    @Override
-    public void stop() throws Exception {
-        //TODO Implement
-        throw new NotYetImplementedRuntimeException();
-    }
-    
-    @Override
-    public void close() throws IOException {
-        //TODO Implement
-        throw new NotYetImplementedRuntimeException();
+    protected void processDisconnect(long timestamp, boolean ok, boolean local, Throwable throwable) throws Exception {
+        onEvent(new DisconnectedEvent(timestamp, ok, local, throwable));
     }
     
 }
