@@ -14,7 +14,7 @@
  *     limitations under the License.
  */
 
-package de.codemakers.net.wrapper.advanced;
+package de.codemakers.net.wrapper.sockets;
 
 import de.codemakers.base.events.EventHandler;
 import de.codemakers.base.events.EventListener;

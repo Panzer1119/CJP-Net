@@ -18,7 +18,7 @@ package de.codemakers.net.wrapper;
 
 import de.codemakers.base.exceptions.CJPNullPointerException;
 import de.codemakers.net.events.SocketAcceptedEvent;
-import de.codemakers.net.wrapper.advanced.AdvancedServerSocket;
+import de.codemakers.net.wrapper.sockets.AdvancedServerSocket;
 
 import java.net.ServerSocket;
 import java.util.List;
