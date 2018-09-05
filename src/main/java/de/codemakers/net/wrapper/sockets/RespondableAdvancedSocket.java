@@ -68,8 +68,13 @@ public abstract class RespondableAdvancedSocket extends AdvancedSocket {
     private RequestResponseEvent sendRequestResponse(Object data) throws Exception {
         final RequestResponseEvent requestResponseEvent = new RequestResponseEvent(data);
         requestedResponses.put(requestResponseEvent.getResponseId(), null);
-        send(requestResponseEvent);
-        return requestResponseEvent;
+        try {
+            send(requestResponseEvent);
+            return requestResponseEvent;
+        } catch (Exception ex) {
+            requestedResponses.remove(requestResponseEvent.getResponseId());
+            throw ex;
+        }
     }
     
     public <T> ReturningAction<T> requestResponse(Object data) {
