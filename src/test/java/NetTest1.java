@@ -90,7 +90,7 @@ public class NetTest1 {
                 final long duration = System.currentTimeMillis() - start;
                 System.out.println("Test finished: " + duration + "ms");
             }
-        }, 30000);
+        }, 15000);
     }
     
 }

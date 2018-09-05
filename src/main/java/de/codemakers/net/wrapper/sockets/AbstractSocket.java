@@ -25,6 +25,7 @@ import de.codemakers.base.util.tough.ToughFunction;
 
 import java.io.*;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.nio.channels.AlreadyBoundException;
@@ -45,8 +46,8 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
     public AbstractSocket(Socket socket) {
         this.socket = socket;
         if (socket != null) {
-            inetAddress = socket.getInetAddress();
-            port = socket.getPort();
+            this.inetAddress = socket.getInetAddress();
+            this.port = socket.getPort();
         }
     }
     
@@ -123,20 +124,23 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
                 }
             } catch (SocketException ex) {
                 final long timestamp = System.currentTimeMillis();
-                System.err.println("ERROR CLIENTS SOCKET CLOSED:"); //TODO Debug only
+                running.set(false);
                 try {
                     processDisconnect(timestamp, localCloseRequested.get(), localCloseRequested.get(), ex);
                 } catch (Exception ex2) {
                     Logger.handleError(ex2);
                 }
+                disconnectWithoutException();
             } catch (Exception ex) {
+                final long timestamp = System.currentTimeMillis();
                 running.set(false);
                 try {
-                    processDisconnect(System.currentTimeMillis(), false, false, ex);
+                    processDisconnect(timestamp, false, localCloseRequested.get(), ex);
                 } catch (Exception ex2) {
                     Logger.handleError(ex2);
                 }
-                Logger.handleError(ex); //TODO ignore the Exceptions thrown, if the ServerSocket was stopped by user
+                Logger.handleError(ex);
+                disconnectWithoutException();
             }
         });
         return true;
@@ -237,14 +241,16 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
     }
     
     @Override
-    public boolean connect() throws Exception {
+    public boolean connect(boolean reconnect) throws Exception {
         if (isRunning()) {
             return false;
         }
         if (socket == null) {
             initSocket();
+        } else if (reconnect && socket.isClosed()/* && !socket.isConnected()*/) { //TODO when the Socket is closed by user, it may return true for isConnected
+            socket.connect(new InetSocketAddress(inetAddress, port));
         }
-        return socket != null && socket.isConnected(); //TODO Test this
+        return socket != null && socket.isConnected() && socket.isBound() && !socket.isClosed(); //TODO Test this
     }
     
     @Override
@@ -253,13 +259,14 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
             return false;
         }
         if (socket != null) {
-            System.err.println("Trying to closing SOCKET");
+            System.err.println("Trying to closing SOCKET"); //TODO Debug only
             close();
-            socket = null;
+            //socket = null; //TODO Maybe do not set this null? Because if you want to reuse this socket...
             setInputStream(null);
             setOutputStream(null);
+            return true;
         }
-        return socket == null;
+        return false;
     }
     
     @Override
@@ -277,12 +284,6 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
     @Override
     public boolean stop() throws Exception {
         if (isRunning()) {
-            /*
-            if (thread != null) {
-                thread.interrupt(); //TODO fix this, because blocking methods can not be interrupted by this
-                thread = null;
-            }
-            */
             if (!disconnect()) {
                 return false;
             }
