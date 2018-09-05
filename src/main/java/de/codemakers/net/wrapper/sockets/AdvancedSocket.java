@@ -16,7 +16,6 @@
 
 package de.codemakers.net.wrapper.sockets;
 
-import de.codemakers.base.action.RunningAction;
 import de.codemakers.base.events.EventHandler;
 import de.codemakers.base.events.EventListener;
 import de.codemakers.base.events.IEventHandler;
@@ -84,18 +83,6 @@ public class AdvancedSocket extends AbstractSocket implements IEventHandler<NetE
         ((ObjectOutputStream) getOutputStream()).writeObject(object);
         getOutputStream().flush();
         return true;
-    }
-    
-    public boolean isObjectOutputStream() {
-        return getOutputStream() instanceof ObjectOutputStream;
-    }
-    
-    public RunningAction sendObject(Object object) {
-        return new RunningAction(() -> send(object));
-    }
-    
-    public RunningAction sendData(byte[] data) {
-        return new RunningAction(() -> send(data));
     }
     
 }

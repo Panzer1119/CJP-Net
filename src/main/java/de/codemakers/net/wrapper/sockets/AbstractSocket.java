@@ -16,6 +16,7 @@
 
 package de.codemakers.net.wrapper.sockets;
 
+import de.codemakers.base.action.ReturningAction;
 import de.codemakers.base.logger.Logger;
 import de.codemakers.base.util.interfaces.Connectable;
 import de.codemakers.base.util.interfaces.Disconnectable;
@@ -79,6 +80,10 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
         return send(object, null);
     }
     
+    public ReturningAction<Boolean> sendAction(Object object) {
+        return new ReturningAction<>(() -> send(object));
+    }
+    
     public boolean send(byte[] data) throws Exception {
         if (data != null && getOutputStream() != null) {
             getOutputStream().write(data);
@@ -103,6 +108,10 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
     
     public boolean sendWithoutException(byte[] data) {
         return send(data, null);
+    }
+    
+    public ReturningAction<Boolean> sendAction(byte[] data) {
+        return new ReturningAction<>(() -> send(data));
     }
     
     private final boolean initThread() {
@@ -227,6 +236,10 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
             }
         }
         return this;
+    }
+    
+    public final boolean isObjectOutputStream() {
+        return getOutputStream() instanceof ObjectOutputStream;
     }
     
     private boolean initSocket() throws IOException {
