@@ -242,6 +242,13 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
         return getOutputStream() instanceof ObjectOutputStream;
     }
     
+    public final boolean openObjectOutputStream() {
+        if (!isObjectOutputStream()) {
+            processOutputStream(ObjectOutputStream::new);
+        }
+        return isObjectOutputStream();
+    }
+    
     private boolean initSocket() throws IOException {
         if (socket != null) {
             return false;
