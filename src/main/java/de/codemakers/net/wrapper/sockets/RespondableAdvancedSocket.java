@@ -18,6 +18,7 @@ package de.codemakers.net.wrapper.sockets;
 
 import de.codemakers.base.action.ReturningAction;
 import de.codemakers.base.exceptions.CJPNullPointerException;
+import de.codemakers.base.util.Waiter;
 import de.codemakers.base.util.tough.ToughFunction;
 import de.codemakers.base.util.tough.ToughSupplier;
 import de.codemakers.net.events.RequestResponseEvent;
@@ -28,6 +29,8 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public abstract class RespondableAdvancedSocket extends AdvancedSocket {
     
@@ -70,9 +73,15 @@ public abstract class RespondableAdvancedSocket extends AdvancedSocket {
     }
     
     public <T> ReturningAction<T> requestResponse(Object data) {
+        return requestResponse(data, -1, null);
+    }
+    
+    public <T> ReturningAction<T> requestResponse(Object data, long timeout, TimeUnit unit) {
         return new ReturningAction<>(() -> {
             final RequestResponseEvent requestResponseEvent = sendRequestResponse(data);
-            //TODO Wait for the ResponseEvent to be received
+            if (!new Waiter(timeout, unit, () -> requestedResponses.get(requestResponseEvent.getResponseId()) != null).waitFor()) {
+                throw new TimeoutException();
+            }
             final ResponseEvent responseEvent = requestedResponses.remove(requestResponseEvent.getResponseId());
             if (responseEvent == null) {
                 throw new CJPNullPointerException(); //This should never happen
