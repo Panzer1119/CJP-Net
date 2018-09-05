@@ -260,8 +260,18 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
         }
         if (socket == null) {
             initSocket();
-        } else if (reconnect && socket.isClosed()/* && !socket.isConnected()*/) { //TODO when the Socket is closed by user, it may return true for isConnected
-            socket.connect(new InetSocketAddress(inetAddress, port));
+        } else if (reconnect) {
+            if (socket.isClosed()/* && !socket.isConnected()*/) { //TODO when the Socket is closed by user, it may return true for isConnected
+                socket.connect(new InetSocketAddress(inetAddress, port));
+            } else {
+                throw new AlreadyBoundException();
+            }
+        } else {
+            if (socket.isClosed()/* && !socket.isConnected()*/) { //TODO when the Socket is closed by user, it may return true for isConnected
+                socket = null;
+            } else {
+                throw new AlreadyBoundException();
+            }
         }
         return socket != null && socket.isConnected() && socket.isBound() && !socket.isClosed(); //TODO Test this
     }
