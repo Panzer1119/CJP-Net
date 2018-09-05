@@ -68,7 +68,7 @@ public class NetTest1 {
             @Override
             public void run() {
                 advancedSocket.processOutputStream(ObjectOutputStream::new);
-                advancedSocket.sendObject("Test").queue(() -> System.out.println("[CLIENT] sent data successfully"), (throwable) -> System.out.println("[CLIENT] sent data not successfully: " + throwable));
+                advancedSocket.sendAction("Test").queue((success) -> System.out.println("[CLIENT] sending data was successful: " + success), (throwable) -> System.out.println("[CLIENT] sent data not successfully: " + throwable));
             }
         }, 2000);
         new Timer().schedule(new TimerTask() {
