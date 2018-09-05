@@ -15,12 +15,15 @@
  */
 
 import de.codemakers.base.logger.Logger;
+import de.codemakers.net.events.DisconnectedEvent;
+import de.codemakers.net.events.ObjectReceived;
 import de.codemakers.net.events.SocketAcceptedEvent;
 import de.codemakers.net.wrapper.sockets.AdvancedServerSocket;
 import de.codemakers.net.wrapper.sockets.AdvancedSocket;
 
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
+import java.time.Instant;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -30,9 +33,14 @@ public class NetTest1 {
     
     public static final void main(String[] args) throws Exception {
         final long start = System.currentTimeMillis();
+        final Instant instant = Instant.now();
+        System.out.println("start  : " + start);
+        System.out.println("instant: " + instant.toEpochMilli());
         System.out.println("Test started: " + start);
         final AdvancedServerSocket advancedServerSocket = new AdvancedServerSocket(PORT);
         advancedServerSocket.addEventListener(SocketAcceptedEvent.class, (socketAcceptedEvent) -> {
+            System.out.println("[SERVER] SocketAcceptedEvent: " + socketAcceptedEvent);
+            System.out.println("[SERVER] SocketAcceptedEvent TIME: " + socketAcceptedEvent.toLocalISOZonedDateTime());
             System.out.println("[SERVER] Socket accepted: " + socketAcceptedEvent.getSocket());
             try {
                 final ObjectOutputStream objectOutputStream = new ObjectOutputStream(socketAcceptedEvent.getSocket().getOutputStream());
@@ -41,15 +49,28 @@ public class NetTest1 {
                 Logger.handleError(ex);
             }
         });
+        advancedServerSocket.addEventListener(DisconnectedEvent.class, (disconnectedEvent) -> {
+            System.out.println("[SERVER] DisconnectedEvent: " + disconnectedEvent);
+        });
         advancedServerSocket.start(Throwable::printStackTrace);
         final AdvancedSocket advancedSocket = new AdvancedSocket(InetAddress.getLocalHost(), PORT);
-        /*
         advancedSocket.addEventListener(ObjectReceived.class, (objectReceivedEvent) -> {
-            System.out.println("[CLIENT]: " + objectReceivedEvent);
+            System.out.println("[CLIENT] ObjectReceivedEvent: " + objectReceivedEvent);
+            System.out.println("[CLIENT] ObjectReceivedEvent TIME: " + objectReceivedEvent.toLocalISOZonedDateTime());
+            System.out.println("[CLIENT] received: " + objectReceivedEvent.getObject());
         });
-        */
+        advancedSocket.addEventListener(DisconnectedEvent.class, (disconnectedEvent) -> {
+            System.out.println("[CLIENT] DisconnectedEvent: " + disconnectedEvent);
+        });
+        advancedSocket.processOutputStream(ObjectOutputStream::new);
         //System.out.println("Connected: " + advancedSocket.connect());
         System.out.println("Started: " + advancedSocket.start());
+        new Timer().schedule(new TimerTask() {
+            @Override
+            public void run() {
+                advancedSocket.sendObject("Test").queue(() -> System.out.println("[CLIENT] sent data successfully"), (throwable) -> System.out.println("[CLIENT] sent data not successfully: " + throwable));
+            }
+        }, 2000);
         new Timer().schedule(new TimerTask() {
             @Override
             public void run() {

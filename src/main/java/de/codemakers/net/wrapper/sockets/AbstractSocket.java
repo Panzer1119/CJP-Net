@@ -21,6 +21,7 @@ import de.codemakers.base.util.interfaces.Connectable;
 import de.codemakers.base.util.interfaces.Disconnectable;
 import de.codemakers.base.util.interfaces.Startable;
 import de.codemakers.base.util.interfaces.Stoppable;
+import de.codemakers.base.util.tough.ToughFunction;
 
 import java.io.*;
 import java.net.InetAddress;
@@ -28,6 +29,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.nio.channels.AlreadyBoundException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 public abstract class AbstractSocket implements Closeable, Connectable, Disconnectable, Startable, Stoppable {
     
@@ -36,6 +38,7 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
     private Socket socket = null;
     private Thread thread = null;
     private AtomicBoolean running = new AtomicBoolean(false);
+    private AtomicBoolean localCloseRequested = new AtomicBoolean(false);
     private InputStream inputStream;
     private OutputStream outputStream;
     
@@ -56,6 +59,50 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
     
     protected abstract void processDisconnect(long timestamp, boolean ok, boolean local, Throwable throwable) throws Exception;
     
+    public abstract boolean send(Object object) throws Exception;
+    
+    public boolean send(Object object, Consumer<Throwable> failure) {
+        try {
+            return send(object);
+        } catch (Exception ex) {
+            if (failure != null) {
+                failure.accept(ex);
+            } else {
+                Logger.handleError(ex);
+            }
+            return false;
+        }
+    }
+    
+    public boolean sendWithoutException(Object object) {
+        return send(object, null);
+    }
+    
+    public boolean send(byte[] data) throws Exception {
+        if (data != null) {
+            getOutputStream().write(data);
+            return true;
+        }
+        return false;
+    }
+    
+    public boolean send(byte[] data, Consumer<Throwable> failure) {
+        try {
+            return send(data);
+        } catch (Exception ex) {
+            if (failure != null) {
+                failure.accept(ex);
+            } else {
+                Logger.handleError(ex);
+            }
+            return false;
+        }
+    }
+    
+    public boolean sendWithoutException(byte[] data) {
+        return send(data, null);
+    }
+    
     private final boolean initThread() {
         if (thread != null) {
             return false;
@@ -65,7 +112,7 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
             try {
                 final ObjectInputStream objectInputStream = new ObjectInputStream(socket.getInputStream());
                 Object object = null;
-                while (isRunning() || (object = objectInputStream.readObject()) != null) {
+                while (isRunning() && (object = objectInputStream.readObject()) != null) {
                     final long timestamp = System.currentTimeMillis();
                     try {
                         processInput(timestamp, object);
@@ -74,7 +121,13 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
                     }
                 }
             } catch (SocketException ex) {
-                ex.printStackTrace(); //TODO distinguish HERE between local or remote disconnection (using StackTrace and searching if a close method from THIS or any super/sub class caused this Exception)
+                final long timestamp = System.currentTimeMillis();
+                System.err.println("ERROR CLIENTS SOCKET CLOSED:"); //TODO Debug only
+                try {
+                    processDisconnect(timestamp, localCloseRequested.get(), localCloseRequested.get(), ex);
+                } catch (Exception ex2) {
+                    Logger.handleError(ex2);
+                }
             } catch (Exception ex) {
                 running.set(false);
                 try {
@@ -142,6 +195,16 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
         return this;
     }
     
+    public final AbstractSocket processInputStream(ToughFunction<InputStream, InputStream> function) {
+        if (function != null) {
+            final InputStream inputStream = function.applyWithoutException(this.inputStream);
+            if (inputStream != null) {
+                this.inputStream = inputStream;
+            }
+        }
+        return this;
+    }
+    
     public final OutputStream getOutputStream() {
         return outputStream;
     }
@@ -151,10 +214,21 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
         return this;
     }
     
+    public final AbstractSocket processOutputStream(ToughFunction<OutputStream, OutputStream> function) {
+        if (function != null) {
+            final OutputStream outputStream = function.applyWithoutException(this.outputStream);
+            if (outputStream != null) {
+                this.outputStream = outputStream;
+            }
+        }
+        return this;
+    }
+    
     private boolean initSocket() throws IOException {
         if (socket != null) {
             return false;
         }
+        localCloseRequested.set(false);
         socket = new Socket(inetAddress, port);
         return true;
     }
@@ -176,6 +250,7 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
             return false;
         }
         if (socket != null) {
+            System.err.println("Trying to closing SOCKET");
             close();
             socket = null;
         }
@@ -220,6 +295,7 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
     @Override
     public void close() throws IOException {
         if (socket != null) {
+            localCloseRequested.set(true);
             socket.close();
         }
     }

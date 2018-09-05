@@ -16,12 +16,10 @@
 
 package de.codemakers.net.events;
 
-import de.codemakers.base.events.Event;
-
 import java.net.InetAddress;
 import java.util.Objects;
 
-public class ConnectionEvent extends Event {
+public class ConnectionEvent extends NetEvent {
     
     protected final InetAddress inetAddress;
     protected final int port;

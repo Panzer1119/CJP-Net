@@ -19,15 +19,17 @@ package de.codemakers.net.wrapper.sockets;
 import de.codemakers.base.events.EventHandler;
 import de.codemakers.base.events.EventListener;
 import de.codemakers.base.events.IEventHandler;
+import de.codemakers.net.events.DisconnectedEvent;
+import de.codemakers.net.events.NetEvent;
 import de.codemakers.net.events.SocketAcceptedEvent;
 
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.List;
 
-public class AdvancedServerSocket extends AbstractServerSocket implements IEventHandler<SocketAcceptedEvent> {
+public class AdvancedServerSocket extends AbstractServerSocket implements IEventHandler<NetEvent> {
     
-    private final EventHandler<SocketAcceptedEvent> socketAcceptedEventHandler = new EventHandler<>();
+    private final EventHandler<NetEvent> netEventHandler = new EventHandler<>();
     
     public AdvancedServerSocket(ServerSocket serverSocket) {
         super(serverSocket);
@@ -43,28 +45,33 @@ public class AdvancedServerSocket extends AbstractServerSocket implements IEvent
     }
     
     @Override
-    public final IEventHandler<SocketAcceptedEvent> addEventListener(Class<SocketAcceptedEvent> aClass, EventListener<SocketAcceptedEvent> eventListener) {
-        return socketAcceptedEventHandler.addEventListener(aClass, eventListener);
+    protected void processDisconnect(long timestamp, boolean ok, boolean local, Throwable throwable) throws Exception {
+        onEvent(new DisconnectedEvent(timestamp, ok, local, throwable));
     }
     
     @Override
-    public final IEventHandler<SocketAcceptedEvent> removeEventListener(Class<SocketAcceptedEvent> aClass, EventListener<SocketAcceptedEvent> eventListener) {
-        return socketAcceptedEventHandler.removeEventListener(aClass, eventListener);
+    public final <E extends NetEvent> IEventHandler<NetEvent> addEventListener(Class<E> aClass, EventListener<E> eventListener) {
+        return netEventHandler.addEventListener(aClass, eventListener);
     }
     
     @Override
-    public final IEventHandler<SocketAcceptedEvent> clearEventListeners() {
-        return socketAcceptedEventHandler.clearEventListeners();
+    public final <E extends NetEvent> IEventHandler<NetEvent> removeEventListener(Class<E> aClass, EventListener<E> eventListener) {
+        return netEventHandler.removeEventListener(aClass, eventListener);
     }
     
     @Override
-    public final List<EventListener<SocketAcceptedEvent>> getEventListeners(Class<SocketAcceptedEvent> aClass) {
-        return socketAcceptedEventHandler.getEventListeners(aClass);
+    public final IEventHandler<NetEvent> clearEventListeners() {
+        return netEventHandler.clearEventListeners();
     }
     
     @Override
-    public final void onEvent(SocketAcceptedEvent socketAcceptedEvent) {
-        socketAcceptedEventHandler.onEvent(socketAcceptedEvent);
+    public <E extends NetEvent> List<EventListener<E>> getEventListeners(Class<E> aClass) {
+        return netEventHandler.getEventListeners(aClass);
+    }
+    
+    @Override
+    public final void onEvent(NetEvent socketAcceptedEvent) {
+        netEventHandler.onEvent(socketAcceptedEvent);
     }
     
 }

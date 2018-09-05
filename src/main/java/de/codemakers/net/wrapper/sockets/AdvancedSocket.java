@@ -16,6 +16,7 @@
 
 package de.codemakers.net.wrapper.sockets;
 
+import de.codemakers.base.action.RunningAction;
 import de.codemakers.base.events.EventHandler;
 import de.codemakers.base.events.EventListener;
 import de.codemakers.base.events.IEventHandler;
@@ -23,6 +24,7 @@ import de.codemakers.net.events.DisconnectedEvent;
 import de.codemakers.net.events.NetEvent;
 import de.codemakers.net.events.ObjectReceived;
 
+import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.List;
@@ -40,12 +42,12 @@ public class AdvancedSocket extends AbstractSocket implements IEventHandler<NetE
     }
     
     @Override
-    public IEventHandler<NetEvent> addEventListener(Class<NetEvent> aClass, EventListener<NetEvent> eventListener) {
+    public <E extends NetEvent> IEventHandler<NetEvent> addEventListener(Class<E> aClass, EventListener<E> eventListener) {
         return netEventHandler.addEventListener(aClass, eventListener);
     }
     
     @Override
-    public IEventHandler<NetEvent> removeEventListener(Class<NetEvent> aClass, EventListener<NetEvent> eventListener) {
+    public <E extends NetEvent> IEventHandler<NetEvent> removeEventListener(Class<E> aClass, EventListener<E> eventListener) {
         return netEventHandler.removeEventListener(aClass, eventListener);
     }
     
@@ -55,7 +57,7 @@ public class AdvancedSocket extends AbstractSocket implements IEventHandler<NetE
     }
     
     @Override
-    public List<EventListener<NetEvent>> getEventListeners(Class<NetEvent> aClass) {
+    public <E extends NetEvent> List<EventListener<E>> getEventListeners(Class<E> aClass) {
         return netEventHandler.getEventListeners(aClass);
     }
     
@@ -72,6 +74,27 @@ public class AdvancedSocket extends AbstractSocket implements IEventHandler<NetE
     @Override
     protected void processDisconnect(long timestamp, boolean ok, boolean local, Throwable throwable) throws Exception {
         onEvent(new DisconnectedEvent(timestamp, ok, local, throwable));
+    }
+    
+    @Override
+    public boolean send(Object object) throws Exception {
+        if (!isObjectOutputStream()) {
+            throw new UnsupportedOperationException(getClass().getSimpleName() + " has no ObjectOutputStream");
+        }
+        ((ObjectOutputStream) getOutputStream()).writeObject(object);
+        return true;
+    }
+    
+    public boolean isObjectOutputStream() {
+        return getOutputStream() instanceof ObjectOutputStream;
+    }
+    
+    public RunningAction sendObject(Object object) {
+        return new RunningAction(() -> send(object));
+    }
+    
+    public RunningAction sendData(byte[] data) {
+        return new RunningAction(() -> send(data));
     }
     
 }

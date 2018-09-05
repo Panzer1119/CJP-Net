@@ -34,6 +34,7 @@ public abstract class AbstractServerSocket implements Closeable, Startable, Stop
     private ServerSocket serverSocket = null;
     private Thread thread = null;
     private AtomicBoolean running = new AtomicBoolean(false);
+    private AtomicBoolean localCloseRequested = new AtomicBoolean(false);
     
     public AbstractServerSocket(ServerSocket serverSocket) {
         this.serverSocket = serverSocket;
@@ -47,6 +48,8 @@ public abstract class AbstractServerSocket implements Closeable, Startable, Stop
     }
     
     protected abstract void processSocket(long timestamp, Socket socket) throws Exception;
+    
+    protected abstract void processDisconnect(long timestamp, boolean ok, boolean local, Throwable throwable) throws Exception;
     
     private final boolean initThread() {
         if (thread != null) {
@@ -67,7 +70,13 @@ public abstract class AbstractServerSocket implements Closeable, Startable, Stop
                     }
                 }
             } catch (SocketException ex) {
-                ex.printStackTrace(); //TODO distinguish HERE between local or remote disconnection (using StackTrace and searching if a close method from THIS or any super/sub class caused this Exception)
+                final long timestamp = System.currentTimeMillis();
+                System.err.println("ERROR SERVERS SOCKET CLOSED:"); //TODO Debug only
+                try {
+                    processDisconnect(timestamp, localCloseRequested.get(), true, ex);
+                } catch (Exception ex2) {
+                    Logger.handleError(ex2);
+                }
             } catch (Exception ex) {
                 running.set(false);
                 Logger.handleError(ex); //TODO ignore the Exceptions thrown, if the ServerSocket was stopped by user
@@ -116,6 +125,7 @@ public abstract class AbstractServerSocket implements Closeable, Startable, Stop
         if (serverSocket != null) {
             return false;
         }
+        localCloseRequested.set(false);
         serverSocket = new ServerSocket(port);
         return true;
     }
@@ -150,6 +160,7 @@ public abstract class AbstractServerSocket implements Closeable, Startable, Stop
     @Override
     public void close() throws IOException {
         if (serverSocket != null) {
+            localCloseRequested.set(true);
             serverSocket.close();
         }
     }
