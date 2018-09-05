@@ -231,8 +231,8 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
         }
         localCloseRequested.set(false);
         socket = new Socket(inetAddress, port);
-        setInputStream(socket.getInputStream());
         setOutputStream(socket.getOutputStream());
+        setInputStream(socket.getInputStream());
         return true;
     }
     
