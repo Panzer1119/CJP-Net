@@ -80,6 +80,7 @@ public abstract class RespondableAdvancedSocket extends AdvancedSocket {
         return new ReturningAction<>(() -> {
             final RequestResponseEvent requestResponseEvent = sendRequestResponse(data);
             if (!new Waiter(timeout, unit, () -> requestedResponses.get(requestResponseEvent.getResponseId()) != null).waitFor()) {
+                requestedResponses.remove(requestResponseEvent.getResponseId());
                 throw new TimeoutException();
             }
             final ResponseEvent responseEvent = requestedResponses.remove(requestResponseEvent.getResponseId());
