@@ -79,8 +79,9 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
     }
     
     public boolean send(byte[] data) throws Exception {
-        if (data != null) {
+        if (data != null && getOutputStream() != null) {
             getOutputStream().write(data);
+            getOutputStream().flush();
             return true;
         }
         return false;
@@ -230,6 +231,8 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
         }
         localCloseRequested.set(false);
         socket = new Socket(inetAddress, port);
+        setInputStream(socket.getInputStream());
+        setOutputStream(socket.getOutputStream());
         return true;
     }
     
@@ -253,6 +256,8 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
             System.err.println("Trying to closing SOCKET");
             close();
             socket = null;
+            setInputStream(null);
+            setOutputStream(null);
         }
         return socket == null;
     }
@@ -294,8 +299,14 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
     
     @Override
     public void close() throws IOException {
+        localCloseRequested.set(true);
+        if (outputStream != null) {
+            outputStream.close();
+        }
+        if (inputStream != null) {
+            inputStream.close();
+        }
         if (socket != null) {
-            localCloseRequested.set(true);
             socket.close();
         }
     }

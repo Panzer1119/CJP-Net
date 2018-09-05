@@ -62,12 +62,12 @@ public class NetTest1 {
         advancedSocket.addEventListener(DisconnectedEvent.class, (disconnectedEvent) -> {
             System.out.println("[CLIENT] DisconnectedEvent: " + disconnectedEvent);
         });
-        advancedSocket.processOutputStream(ObjectOutputStream::new);
         //System.out.println("Connected: " + advancedSocket.connect());
         System.out.println("Started: " + advancedSocket.start());
         new Timer().schedule(new TimerTask() {
             @Override
             public void run() {
+                advancedSocket.processOutputStream(ObjectOutputStream::new);
                 advancedSocket.sendObject("Test").queue(() -> System.out.println("[CLIENT] sent data successfully"), (throwable) -> System.out.println("[CLIENT] sent data not successfully: " + throwable));
             }
         }, 2000);

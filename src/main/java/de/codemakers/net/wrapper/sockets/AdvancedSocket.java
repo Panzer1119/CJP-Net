@@ -82,6 +82,7 @@ public class AdvancedSocket extends AbstractSocket implements IEventHandler<NetE
             throw new UnsupportedOperationException(getClass().getSimpleName() + " has no ObjectOutputStream");
         }
         ((ObjectOutputStream) getOutputStream()).writeObject(object);
+        getOutputStream().flush();
         return true;
     }
     
