@@ -70,8 +70,8 @@ public class AdvancedServerSocket extends AbstractServerSocket implements IEvent
     }
     
     @Override
-    public final void onEvent(NetEvent socketAcceptedEvent) {
-        netEventHandler.onEvent(socketAcceptedEvent);
+    public final boolean onEvent(NetEvent socketAcceptedEvent) throws Exception {
+        return netEventHandler.onEvent(socketAcceptedEvent);
     }
     
 }

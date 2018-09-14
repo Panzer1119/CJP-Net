@@ -48,9 +48,11 @@ public class NetTest1 {
             } catch (Exception ex) {
                 Logger.handleError(ex);
             }
+            return false;
         });
         advancedServerSocket.addEventListener(DisconnectedEvent.class, (disconnectedEvent) -> {
             System.out.println("[SERVER] DisconnectedEvent: " + disconnectedEvent);
+            return false;
         });
         advancedServerSocket.start(Throwable::printStackTrace);
         final AdvancedSocket advancedSocket = new AdvancedSocket(InetAddress.getLocalHost(), PORT);
@@ -58,9 +60,11 @@ public class NetTest1 {
             System.out.println("[CLIENT] ObjectReceivedEvent: " + objectReceivedEvent);
             System.out.println("[CLIENT] ObjectReceivedEvent TIME: " + objectReceivedEvent.toLocalISOZonedDateTime());
             System.out.println("[CLIENT] received: " + objectReceivedEvent.getObject());
+            return false;
         });
         advancedSocket.addEventListener(DisconnectedEvent.class, (disconnectedEvent) -> {
             System.out.println("[CLIENT] DisconnectedEvent: " + disconnectedEvent);
+            return false;
         });
         //System.out.println("Connected: " + advancedSocket.connect());
         System.out.println("Started: " + advancedSocket.start());

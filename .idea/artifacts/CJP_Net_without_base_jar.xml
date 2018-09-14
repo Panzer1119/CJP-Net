@@ -1,7 +1,7 @@
 <component name="ArtifactManager">
   <artifact type="jar" name="CJP-Net_without_base:jar">
     <output-path>$PROJECT_DIR$/store</output-path>
-    <root id="archive" name="CJP-Net-only-v1.8.0_172-alpha.2.jar">
+    <root id="archive" name="CJP-Net-only-v1.8.0_172-alpha.3.jar">
       <element id="module-output" name="CJP-Net_main" />
       <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/commons-io/commons-io/2.6/815893df5f31da2ece4040fe0a12fd44b577afaf/commons-io-2.6.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.google.code.gson/gson/2.8.5/f645ed69d595b24d4cf8b3fbb64cc505bede8829/gson-2.8.5.jar" path-in-jar="/" />

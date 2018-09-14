@@ -22,6 +22,7 @@ import de.codemakers.base.util.interfaces.Connectable;
 import de.codemakers.base.util.interfaces.Disconnectable;
 import de.codemakers.base.util.interfaces.Startable;
 import de.codemakers.base.util.interfaces.Stoppable;
+import de.codemakers.base.util.tough.ToughConsumer;
 import de.codemakers.base.util.tough.ToughFunction;
 
 import java.io.*;
@@ -31,7 +32,6 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.nio.channels.AlreadyBoundException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
 
 public abstract class AbstractSocket implements Closeable, Connectable, Disconnectable, Startable, Stoppable {
     
@@ -63,12 +63,12 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
     
     public abstract boolean send(Object object) throws Exception;
     
-    public boolean send(Object object, Consumer<Throwable> failure) {
+    public boolean send(Object object, ToughConsumer<Throwable> failure) {
         try {
             return send(object);
         } catch (Exception ex) {
             if (failure != null) {
-                failure.accept(ex);
+                failure.acceptWithoutException(ex);
             } else {
                 Logger.handleError(ex);
             }
@@ -93,12 +93,12 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
         return false;
     }
     
-    public boolean send(byte[] data, Consumer<Throwable> failure) {
+    public boolean send(byte[] data, ToughConsumer<Throwable> failure) {
         try {
             return send(data);
         } catch (Exception ex) {
             if (failure != null) {
-                failure.accept(ex);
+                failure.acceptWithoutException(ex);
             } else {
                 Logger.handleError(ex);
             }

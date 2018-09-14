@@ -61,11 +61,6 @@ public class AdvancedSocket extends AbstractSocket implements IEventHandler<NetE
     }
     
     @Override
-    public void onEvent(NetEvent netEvent) {
-        netEventHandler.onEvent(netEvent);
-    }
-    
-    @Override
     protected void processInput(long timestamp, Object input) throws Exception {
         onEvent(new ObjectReceived(timestamp, input));
     }
@@ -83,6 +78,11 @@ public class AdvancedSocket extends AbstractSocket implements IEventHandler<NetE
         ((ObjectOutputStream) getOutputStream()).writeObject(object);
         getOutputStream().flush();
         return true;
+    }
+    
+    @Override
+    public boolean onEvent(NetEvent netEvent) throws Exception {
+        return netEventHandler.onEvent(netEvent);
     }
     
 }
