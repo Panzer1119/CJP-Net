@@ -47,6 +47,7 @@ public abstract class AbstractServer extends AdvancedServerSocket {
             if (client != null) {
                 clients.add(client);
             }
+            return false;
         });
     }
     
