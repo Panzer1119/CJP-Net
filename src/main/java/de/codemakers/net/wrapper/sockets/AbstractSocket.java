@@ -170,7 +170,7 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
     }
     
     public final boolean isRunning() {
-        return running.get();
+        return running.get() || (socket != null && socket.isConnected() && !socket.isClosed());
     }
     
     public final InetAddress getInetAddress() {
@@ -291,7 +291,8 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
         if (socket != null) {
             System.err.println("Trying to closing SOCKET"); //TODO Debug only
             close();
-            //socket = null; //TODO Maybe do not set this null? Because if you want to reuse this socket...
+            socket = null; //TODO Maybe do not set this null? Because if you want to reuse this socket...
+            //TODO Set socket to null, because otherwise it can not be reused?
             setInputStream(null);
             setOutputStream(null);
             return true;

@@ -100,7 +100,7 @@ public abstract class AbstractServerSocket implements Closeable, Startable, Stop
     }
     
     public final boolean isRunning() {
-        return running.get();
+        return running.get() || (serverSocket != null && !serverSocket.isClosed());
     }
     
     public final int getPort() {

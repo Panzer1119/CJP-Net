@@ -51,11 +51,17 @@ public class SingleResponseSocket extends AbstractSocket {
     
     public ReturningAction<Response> requestResponse(Object request) {
         return new ReturningAction<>(() -> {
-            connect();
-            final ObjectOutputStream objectOutputStream = new ObjectOutputStream(getOutputStream());
-            objectOutputStream.writeObject(request);
-            final ObjectInputStream objectInputStream = new ObjectInputStream(getInputStream());
-            final Object response = objectInputStream.readObject();
+            Object response = null;
+            try {
+                connect(true);
+                final ObjectOutputStream objectOutputStream = new ObjectOutputStream(getOutputStream());
+                objectOutputStream.writeObject(request);
+                final ObjectInputStream objectInputStream = new ObjectInputStream(getInputStream());
+                response = objectInputStream.readObject();
+            } catch (Exception ex) {
+                disconnectWithoutException();
+                throw ex;
+            }
             disconnectWithoutException();
             return (Response) response;
         });
