@@ -45,7 +45,7 @@ public class AdvancedServerSocket extends AbstractServerSocket implements IEvent
     }
     
     @Override
-    protected void processDisconnect(long timestamp, boolean ok, boolean local, Throwable throwable) throws Exception {
+    protected void processStop(long timestamp, boolean ok, boolean local, Throwable throwable) throws Exception {
         onEvent(new DisconnectedEvent(timestamp, ok, local, throwable));
     }
     

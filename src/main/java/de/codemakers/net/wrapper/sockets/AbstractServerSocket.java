@@ -49,7 +49,7 @@ public abstract class AbstractServerSocket implements Closeable, Startable, Stop
     
     protected abstract void processSocket(long timestamp, Socket socket) throws Exception;
     
-    protected abstract void processDisconnect(long timestamp, boolean ok, boolean local, Throwable throwable) throws Exception;
+    protected abstract void processStop(long timestamp, boolean ok, boolean local, Throwable throwable) throws Exception;
     
     private final boolean initThread() {
         if (thread != null) {
@@ -73,7 +73,7 @@ public abstract class AbstractServerSocket implements Closeable, Startable, Stop
                 final long timestamp = System.currentTimeMillis();
                 System.err.println("ERROR SERVERS SOCKET CLOSED:"); //TODO Debug only
                 try {
-                    processDisconnect(timestamp, localCloseRequested.get(), true, ex);
+                    processStop(timestamp, localCloseRequested.get(), true, ex);
                 } catch (Exception ex2) {
                     Logger.handleError(ex2);
                 }
