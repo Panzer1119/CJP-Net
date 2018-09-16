@@ -18,6 +18,7 @@ package de.codemakers.io.file.providers;
 
 import de.codemakers.base.exceptions.CJPRuntimeException;
 import de.codemakers.base.exceptions.NotYetImplementedRuntimeException;
+import de.codemakers.base.reflection.AutoRegister;
 import de.codemakers.base.util.Returner;
 import de.codemakers.io.file.t3.AdvancedFile;
 import de.codemakers.io.file.t3.AdvancedFileFilter;
@@ -30,6 +31,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@AutoRegister
 public class RemoteProvider extends FileProvider<AdvancedFile> {
     
     public static final String PREFIX_REMOTE = "remote:";
