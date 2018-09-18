@@ -18,14 +18,16 @@ package de.codemakers.io.file.providers;
 
 import de.codemakers.base.exceptions.CJPRuntimeException;
 import de.codemakers.base.exceptions.NotYetImplementedRuntimeException;
+import de.codemakers.base.logger.Logger;
 import de.codemakers.base.reflection.AutoRegister;
 import de.codemakers.base.util.Returner;
-import de.codemakers.io.file.t3.AdvancedFile;
-import de.codemakers.io.file.t3.AdvancedFileFilter;
-import de.codemakers.io.file.t3.providers.FileProvider;
+import de.codemakers.io.file.AdvancedFile;
+import de.codemakers.io.file.AdvancedFileFilter;
+import de.codemakers.net.wrapper.sockets.SingleResponseSocket;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -44,6 +46,7 @@ public class RemoteProvider extends FileProvider<AdvancedFile> {
     private int port = -1;
     private String username = null;
     private byte[] password = null;
+    private SingleResponseSocket singleResponseSocket = null;
     
     @Override
     public List<AdvancedFile> listFiles(AdvancedFile parent, AdvancedFile file, boolean recursive, InputStream inputStream) throws Exception {
@@ -85,6 +88,12 @@ public class RemoteProvider extends FileProvider<AdvancedFile> {
     public byte[] readBytes(AdvancedFile parent, AdvancedFile file, InputStream inputStream) throws Exception {
         checkAndErrorIfNotConnected();
         return fileFileProvider_remote.readBytes(parent, file, inputStream);
+    }
+    
+    @Override
+    public boolean canWrite(AdvancedFile advancedFile, AdvancedFile t1) {
+        //TODO Add testing if the user has enough permissions to do this (like READ-Only mode etc)
+        return true;
     }
     
     @Override
@@ -171,6 +180,7 @@ public class RemoteProvider extends FileProvider<AdvancedFile> {
     
     public final RemoteProvider setRemote(String remote) {
         this.remote = remote;
+        resetSingleResponseSocket();
         return this;
     }
     
@@ -180,6 +190,7 @@ public class RemoteProvider extends FileProvider<AdvancedFile> {
     
     public final RemoteProvider setPort(int port) {
         this.port = port;
+        resetSingleResponseSocket();
         return this;
     }
     
@@ -189,6 +200,7 @@ public class RemoteProvider extends FileProvider<AdvancedFile> {
     
     public final RemoteProvider setUsername(String username) {
         this.username = username;
+        resetSingleResponseSocket();
         return this;
     }
     
@@ -198,7 +210,25 @@ public class RemoteProvider extends FileProvider<AdvancedFile> {
     
     public final RemoteProvider setPassword(byte[] password) {
         this.password = password;
+        resetSingleResponseSocket();
         return this;
+    }
+    
+    protected final boolean initSingleResponseSocket() {
+        if (singleResponseSocket == null) {
+            try {
+                singleResponseSocket = new SingleResponseSocket(InetAddress.getByName(remote), port);
+            } catch (Exception ex) {
+                Logger.handleError(ex);
+                return false;
+            }
+        }
+        return singleResponseSocket != null;
+    }
+    
+    protected final boolean resetSingleResponseSocket() {
+        this.singleResponseSocket = null;
+        return true;
     }
     
     @Override
