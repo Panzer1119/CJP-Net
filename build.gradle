@@ -18,6 +18,7 @@ repositories {
 
 dependencies {
     implementation 'com.github.Panzer1119:CJP-Base:v1.8.0_172-alpha.21'
+    //implementation 'com.github.Panzer1119:CJP-Base:f17ecb825a'
     //implementation 'com.github.Panzer1119:CJP-Base:7b6d6a62df'
     //compile name: 'CJP-Base_main'
     testCompile group: 'junit', name: 'junit', version: '4.12'

@@ -21,46 +21,23 @@ import de.codemakers.base.util.interfaces.Snowflake;
 import java.io.Serializable;
 import java.util.Objects;
 
-public class Response<T> implements Serializable, Snowflake {
+public class Request implements Serializable, Snowflake {
     
     private final long id;
-    private final T response;
-    private final Throwable throwable;
+    private final Object request;
     
-    public Response(T response) {
-        this(response, null);
-    }
-    
-    public Response(Throwable throwable) {
-        this(null, throwable);
-    }
-    
-    public Response(T response, Throwable throwable) {
+    public Request(Object request) {
         this.id = generateId();
-        this.response = response;
-        this.throwable = throwable;
+        this.request = request;
     }
     
-    public Response(long id, T response, Throwable throwable) {
+    public Request(long id, Object request) {
         this.id = id;
-        this.response = response;
-        this.throwable = throwable;
+        this.request = request;
     }
     
-    public final T getResponse() {
-        return response;
-    }
-    
-    public final Throwable getThrowable() {
-        return throwable;
-    }
-    
-    public final boolean isSuccessful() {
-        return throwable == null;
-    }
-    
-    public final boolean isErrored() {
-        return throwable != null;
+    public final Object getRequest() {
+        return request;
     }
     
     @Override
@@ -71,18 +48,18 @@ public class Response<T> implements Serializable, Snowflake {
         if (object == null || getClass() != object.getClass()) {
             return false;
         }
-        final Response<?> response1 = (Response<?>) object;
-        return id == response1.id && Objects.equals(response, response1.response) && Objects.equals(throwable, response1.throwable);
+        final Request request1 = (Request) object;
+        return id == request1.id && Objects.equals(this.request, request1.request);
     }
     
     @Override
     public int hashCode() {
-        return Objects.hash(id, response, throwable);
+        return Objects.hash(id, request);
     }
     
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "{" + "id=" + id + ", response=" + response + ", throwable=" + throwable + '}';
+        return getClass().getSimpleName() + "{" + "id=" + id + ", request=" + request + '}';
     }
     
     @Override

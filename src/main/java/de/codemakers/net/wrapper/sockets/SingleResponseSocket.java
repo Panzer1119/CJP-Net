@@ -17,6 +17,8 @@
 package de.codemakers.net.wrapper.sockets;
 
 import de.codemakers.base.action.ReturningAction;
+import de.codemakers.base.exceptions.CJPException;
+import de.codemakers.net.entities.Request;
 import de.codemakers.net.entities.Response;
 
 import java.io.ObjectInputStream;
@@ -53,14 +55,20 @@ public class SingleResponseSocket extends AbstractSocket {
         return new ReturningAction<>(() -> {
             Object response = null;
             try {
+                System.out.println("[CLIENT] starting response requesting");
                 connect(true);
+                System.out.println("[CLIENT] connected");
                 final ObjectOutputStream objectOutputStream = new ObjectOutputStream(getOutputStream());
-                objectOutputStream.writeObject(request);
-                final ObjectInputStream objectInputStream = new ObjectInputStream(getInputStream());
+                System.out.println("[CLIENT] created " + ObjectOutputStream.class.getSimpleName());
+                objectOutputStream.writeObject(new Request(request));
+                System.out.println("[CLIENT] wrote request");
+                final ObjectInputStream objectInputStream = new ObjectInputStream(getInputStream()); //FIXME Maybe do this before sending the request? because maybe this is too slow and the response can not be received
+                System.out.println("[CLIENT] waiting for response");
                 response = objectInputStream.readObject();
+                System.out.println("[CLIENT] got response: " + response);
             } catch (Exception ex) {
                 disconnectWithoutException();
-                throw ex;
+                throw new CJPException(ex);
             }
             disconnectWithoutException();
             return (Response) response;

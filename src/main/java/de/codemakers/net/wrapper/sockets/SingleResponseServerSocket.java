@@ -18,13 +18,16 @@ package de.codemakers.net.wrapper.sockets;
 
 import de.codemakers.base.CJP;
 import de.codemakers.base.action.ReturningAction;
+import de.codemakers.base.util.IDTimeUtil;
 import de.codemakers.base.util.tough.ToughConsumer;
+import de.codemakers.net.entities.Request;
 import de.codemakers.net.entities.Response;
 
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class SingleResponseServerSocket extends AbstractServerSocket {
     
@@ -58,22 +61,30 @@ public abstract class SingleResponseServerSocket extends AbstractServerSocket {
         return this;
     }
     
-    public abstract Object processRequest(Socket socket, Object request) throws Exception;
+    public abstract Object processRequest(Socket socket, Request request) throws Exception;
     
     @Override
     protected void processSocket(long timestamp, Socket socket) throws Exception {
         final ObjectOutputStream objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+        System.out.println("[SERVER] processing socket: " + socket);
+        final AtomicLong responseId = new AtomicLong(IDTimeUtil.createId());
         final ReturningAction<Object> returningAction = new ReturningAction<>(cjp, () -> {
+            System.out.println("[SERVER] waiting for request from " + socket);
             final ObjectInputStream objectInputStream = new ObjectInputStream(socket.getInputStream());
-            return processRequest(socket, objectInputStream.readObject());
+            final Request request = (Request) objectInputStream.readObject();
+            System.out.println("[SERVER] request from " + socket + ": " + request);
+            if (request != null) {
+                responseId.set(request.getId());
+            }
+            return processRequest(socket, request);
         });
         final ToughConsumer<Object> respond = (object) -> {
             objectOutputStream.writeObject(object);
             objectOutputStream.flush();
             socket.close();
         };
-        final ToughConsumer<Object> success = (object) -> respond.accept(new Response<>(object));
-        final ToughConsumer<Throwable> failure = (throwable) -> respond.accept(new Response<>(throwable));
+        final ToughConsumer<Object> success = (object) -> respond.accept(new Response<>(responseId.get(), object, null));
+        final ToughConsumer<Throwable> failure = (throwable) -> respond.accept(new Response<>(responseId.get(), null, throwable));
         if (multithreaded) {
             returningAction.queue(success, failure);
         } else {

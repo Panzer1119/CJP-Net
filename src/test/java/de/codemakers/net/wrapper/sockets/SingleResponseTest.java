@@ -16,18 +16,20 @@
 
 package de.codemakers.net.wrapper.sockets;
 
+import de.codemakers.net.entities.Request;
+
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
 public class SingleResponseTest {
     
-    public static final int PORT = 2358;
+    public static final int PORT = 2359;
     
     public static final void main(String[] args) throws UnknownHostException {
         final SingleResponseServerSocket singleResponseServerSocket = new SingleResponseServerSocket(PORT) {
             @Override
-            public Object processRequest(Socket socket, Object request) throws Exception {
+            public Object processRequest(Socket socket, Request request) throws Exception {
                 System.out.println(String.format("[SERVER] %s requested: %s", socket, request));
                 if ("error".equals(request)) {
                     throw new Exception("Debug Error");
@@ -36,6 +38,7 @@ public class SingleResponseTest {
             }
         };
         singleResponseServerSocket.startWithoutException();
+        System.out.println("[SERVER] " + SingleResponseServerSocket.class.getSimpleName() + " started");
         final SingleResponseSocket singleResponseSocket = new SingleResponseSocket(InetAddress.getLocalHost(), PORT);
         System.out.println("running: " + singleResponseSocket.isRunning());
         System.out.println(String.format("[CLIENT] response: %s", singleResponseSocket.requestResponse("test").direct()));
