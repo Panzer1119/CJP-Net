@@ -48,7 +48,6 @@ public class SingleResponseSocket extends AbstractSocket {
     
     @Override
     public boolean send(Object object) throws Exception {
-        //return false;
         throw new UnsupportedOperationException();
     }
     

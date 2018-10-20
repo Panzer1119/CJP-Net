@@ -119,7 +119,7 @@ public abstract class SingleResponseServerSocket extends AbstractServerSocket {
     protected void processStop(long timestamp, boolean ok, boolean local, Throwable throwable) throws Exception {
         if (!ok && local) {
             stop();
-            start(); //TODO Test this, prevent an infinite loop
+            start(); //TODO Test this, prevent an infinite loop (but !ok should prevent it from infinite looping, when a user requested the shutdown)
         }
     }
     
