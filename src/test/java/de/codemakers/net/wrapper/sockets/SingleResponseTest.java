@@ -39,16 +39,16 @@ public class SingleResponseTest {
         };
         System.out.println(String.format("[SERVER] singleResponseServerSocket started: %s (%s)", singleResponseServerSocket.startWithoutException(), singleResponseServerSocket));
         final SingleResponseSocket singleResponseSocket = new SingleResponseSocket(InetAddress.getLocalHost(), PORT);
-        System.out.println(String.format("[ TEST ] singleResponseSocket running: %s", singleResponseSocket.isRunning()));
+        //System.out.println(String.format("[ TEST ] singleResponseSocket running: %s", singleResponseSocket.isRunning()));
         //
         singleResponseSocket.requestResponse("test1234").queue((response) -> System.out.println("[CLIENT] Response: " + response), (throwable) -> System.err.println("[CLIENT] Request failed: " + throwable));
         //
-        Thread.sleep(5000);
+        Thread.sleep(3000);
         System.out.println(String.format("[CLIENT] response: %s", singleResponseSocket.requestResponse("test").direct()));
-        System.out.println(String.format("[ TEST ] singleResponseSocket running: %s", singleResponseSocket.isRunning()));
+        //System.out.println(String.format("[ TEST ] singleResponseSocket running: %s", singleResponseSocket.isRunning()));
         System.out.println(String.format("[CLIENT] response: %s", singleResponseSocket.requestResponse("error").direct()));
-        System.out.println(String.format("[ TEST ] singleResponseSocket running: %s", singleResponseSocket.isRunning()));
-        System.out.println(String.format("[SERVER] singleResponseServerSocket stopped: %s", singleResponseServerSocket.stopWithoutException()));
+        //System.out.println(String.format("[ TEST ] singleResponseSocket running: %s", singleResponseSocket.isRunning()));
+        System.out.println(String.format("[SERVER] singleResponseServerSocket stopped: %s (%s)", singleResponseServerSocket.stopWithoutException(), singleResponseServerSocket));
         System.exit(0);
     }
     

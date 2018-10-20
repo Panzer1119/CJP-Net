@@ -25,6 +25,7 @@ import de.codemakers.base.util.interfaces.Startable;
 import de.codemakers.base.util.interfaces.Stoppable;
 import de.codemakers.base.util.tough.ToughConsumer;
 import de.codemakers.base.util.tough.ToughFunction;
+import de.codemakers.net.exceptions.NetRuntimeException;
 
 import java.io.*;
 import java.net.*;
@@ -166,7 +167,7 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
             initThread();
         }
         if (socket == null) {
-            throw new IllegalArgumentException("Socket was not created");
+            throw new NetRuntimeException("Socket was not created");
         }
         thread.start();
         return true;
@@ -254,7 +255,6 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
     
     private boolean initSocket() throws IOException {
         if (socket != null) {
-            System.out.println("REEEE23");
             return false;
         }
         localCloseRequested.set(false);
@@ -267,31 +267,23 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
     @Override
     public boolean connect(boolean reconnect) throws Exception {
         if (isRunning()) {
-            System.out.println("REEEEEEEEE");
             return false;
         }
-        System.out.println("AS: 1");
         if (socket == null) {
-            System.out.println("AS: 1.1");
             initSocket();
         } else if (reconnect) {
             if (socket.isClosed()/* && !socket.isConnected()*/) { //TODO when the Socket is closed by user, it may return true for isConnected
-                System.out.println("AS: 1.2.1");
                 socket.connect(new InetSocketAddress(inetAddress, port));
             } else {
-                System.out.println("AS: 1.2.2");
                 throw new AlreadyBoundException();
             }
         } else {
             if (socket.isClosed()/* && !socket.isConnected()*/) { //TODO when the Socket is closed by user, it may return true for isConnected
-                System.out.println("AS: 1.3.1");
                 socket = null;
             } else {
-                System.out.println("AS: 1.3.2");
                 throw new AlreadyBoundException();
             }
         }
-        System.out.println("AS: 2");
         return socket != null && socket.isConnected() && socket.isBound() && !socket.isClosed(); //TODO Test this
     }
     
@@ -301,7 +293,7 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
             return false;
         }
         if (socket != null) {
-            System.err.println("Trying to closing SOCKET"); //TODO Debug only
+            System.out.println("[CLIENT] Trying to close SOCKET"); //TODO Debug only
             close();
             socket = null; //TODO Maybe do not set this null? Because if you want to reuse this socket...
             //TODO Set socket to null, because otherwise it can not be reused?

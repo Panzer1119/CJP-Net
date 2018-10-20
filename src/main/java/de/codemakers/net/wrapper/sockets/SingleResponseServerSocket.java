@@ -19,6 +19,7 @@ package de.codemakers.net.wrapper.sockets;
 import de.codemakers.base.CJP;
 import de.codemakers.base.action.ReturningAction;
 import de.codemakers.base.util.IDTimeUtil;
+import de.codemakers.base.util.tough.ToughConsumer;
 import de.codemakers.net.entities.Request;
 import de.codemakers.net.entities.Response;
 
@@ -39,7 +40,7 @@ public abstract class SingleResponseServerSocket extends AbstractServerSocket {
     
     public SingleResponseServerSocket(ServerSocket serverSocket, CJP cjp) {
         super(serverSocket);
-        this.cjp = cjp;
+        this.cjp = cjp == null ? CJP.getInstance() : cjp;
     }
     
     public SingleResponseServerSocket(int port) {
@@ -48,7 +49,7 @@ public abstract class SingleResponseServerSocket extends AbstractServerSocket {
     
     public SingleResponseServerSocket(int port, CJP cjp) {
         super(port);
-        this.cjp = cjp;
+        this.cjp = cjp == null ? CJP.getInstance() : cjp;
     }
     
     public final boolean isMultithreaded() {
@@ -64,55 +65,26 @@ public abstract class SingleResponseServerSocket extends AbstractServerSocket {
     
     @Override
     protected void processSocket(long timestamp, Socket socket) throws Exception {
-        System.out.println("[SERVER] processing socket: " + socket);
         final ObjectOutputStream objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
-        System.out.println("[SERVER] created " + ObjectOutputStream.class.getSimpleName());
         final AtomicLong responseId = new AtomicLong(IDTimeUtil.createId());
         final ReturningAction<Response<?>> returningAction = new ReturningAction<>(cjp, () -> {
-            System.out.println("[SERVER] waiting for request from: " + socket);
             final ObjectInputStream objectInputStream = new ObjectInputStream(socket.getInputStream());
             final Request<?> request = (Request<?>) objectInputStream.readObject();
-            System.out.println("[SERVER] request from \"" + socket + "\": " + request);
             if (request != null) {
                 responseId.set(request.getId());
             }
             return processRequest(socket, request);
         });
-        if (multithreaded) {
-            returningAction.queue((response) -> {
-                objectOutputStream.writeObject(response);
-                objectOutputStream.flush();
-                socket.close();
-            }, (throwable) -> {
-                objectOutputStream.writeObject(new Response<>(responseId.get(), throwable));
-                objectOutputStream.close();
-                socket.close();
-            });
-        } else {
-            returningAction.queueSingle((response) -> {
-                objectOutputStream.writeObject(response);
-                objectOutputStream.flush();
-                socket.close();
-            }, (throwable) -> {
-                objectOutputStream.writeObject(new Response<>(responseId.get(), throwable));
-                objectOutputStream.close();
-                socket.close();
-            });
-        }
-        /*
-        final ToughConsumer<Object> respond = (object) -> {
-            objectOutputStream.writeObject(object);
+        final ToughConsumer<Response<?>> responder = (response) -> {
+            objectOutputStream.writeObject(response);
             objectOutputStream.flush();
             socket.close();
         };
-        final ToughConsumer<Object> success = (object) -> respond.accept(new Response<>(responseId.get(), object, null));
-        final ToughConsumer<Throwable> failure = (throwable) -> respond.accept(new Response<>(responseId.get(), null, throwable));
         if (multithreaded) {
-            returningAction.queue(success, failure);
+            returningAction.queue(responder, (throwable) -> responder.accept(new Response<>(responseId.get(), throwable)));
         } else {
-            returningAction.queueSingle(success, failure);
+            returningAction.queueSingle(responder, (throwable) -> responder.accept(new Response<>(responseId.get(), throwable)));
         }
-        */
     }
     
     @Override
