@@ -19,7 +19,6 @@ package de.codemakers.net.wrapper.sockets;
 import de.codemakers.base.CJP;
 import de.codemakers.base.action.ReturningAction;
 import de.codemakers.base.util.IDTimeUtil;
-import de.codemakers.base.util.tough.ToughConsumer;
 import de.codemakers.net.entities.Request;
 import de.codemakers.net.entities.Response;
 
@@ -61,23 +60,46 @@ public abstract class SingleResponseServerSocket extends AbstractServerSocket {
         return this;
     }
     
-    public abstract Object processRequest(Socket socket, Request request) throws Exception;
+    public abstract <T> Response<?> processRequest(Socket socket, Request<T> request) throws Exception;
     
     @Override
     protected void processSocket(long timestamp, Socket socket) throws Exception {
-        final ObjectOutputStream objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
         System.out.println("[SERVER] processing socket: " + socket);
+        final ObjectOutputStream objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+        System.out.println("[SERVER] created " + ObjectOutputStream.class.getSimpleName());
         final AtomicLong responseId = new AtomicLong(IDTimeUtil.createId());
-        final ReturningAction<Object> returningAction = new ReturningAction<>(cjp, () -> {
-            System.out.println("[SERVER] waiting for request from " + socket);
+        final ReturningAction<Response<?>> returningAction = new ReturningAction<>(cjp, () -> {
+            System.out.println("[SERVER] waiting for request from: " + socket);
             final ObjectInputStream objectInputStream = new ObjectInputStream(socket.getInputStream());
-            final Request request = (Request) objectInputStream.readObject();
-            System.out.println("[SERVER] request from " + socket + ": " + request);
+            final Request<?> request = (Request<?>) objectInputStream.readObject();
+            System.out.println("[SERVER] request from \"" + socket + "\": " + request);
             if (request != null) {
                 responseId.set(request.getId());
             }
             return processRequest(socket, request);
         });
+        if (multithreaded) {
+            returningAction.queue((response) -> {
+                objectOutputStream.writeObject(response);
+                objectOutputStream.flush();
+                socket.close();
+            }, (throwable) -> {
+                objectOutputStream.writeObject(new Response<>(responseId.get(), throwable));
+                objectOutputStream.close();
+                socket.close();
+            });
+        } else {
+            returningAction.queueSingle((response) -> {
+                objectOutputStream.writeObject(response);
+                objectOutputStream.flush();
+                socket.close();
+            }, (throwable) -> {
+                objectOutputStream.writeObject(new Response<>(responseId.get(), throwable));
+                objectOutputStream.close();
+                socket.close();
+            });
+        }
+        /*
         final ToughConsumer<Object> respond = (object) -> {
             objectOutputStream.writeObject(object);
             objectOutputStream.flush();
@@ -90,6 +112,7 @@ public abstract class SingleResponseServerSocket extends AbstractServerSocket {
         } else {
             returningAction.queueSingle(success, failure);
         }
+        */
     }
     
     @Override

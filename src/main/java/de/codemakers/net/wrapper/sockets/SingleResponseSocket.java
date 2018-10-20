@@ -48,30 +48,30 @@ public class SingleResponseSocket extends AbstractSocket {
     
     @Override
     public boolean send(Object object) throws Exception {
-        return false;
+        //return false;
+        throw new UnsupportedOperationException();
     }
     
-    public ReturningAction<Response> requestResponse(Object request) {
+    public <T, R> ReturningAction<Response<R>> requestResponse(T request) {
         return new ReturningAction<>(() -> {
-            Object response = null;
+            Response<R> response = null;
             try {
-                System.out.println("[CLIENT] starting response requesting");
-                connect(true);
-                System.out.println("[CLIENT] connected");
+                System.out.println("[CLIENT] starting response requesting (\"" + request + "\")");
+                System.out.println("[CLIENT] connected: " + connect(true));
                 final ObjectOutputStream objectOutputStream = new ObjectOutputStream(getOutputStream());
                 System.out.println("[CLIENT] created " + ObjectOutputStream.class.getSimpleName());
-                objectOutputStream.writeObject(new Request(request));
+                objectOutputStream.writeObject(new Request<>(request));
                 System.out.println("[CLIENT] wrote request");
                 final ObjectInputStream objectInputStream = new ObjectInputStream(getInputStream()); //FIXME Maybe do this before sending the request? because maybe this is too slow and the response can not be received
                 System.out.println("[CLIENT] waiting for response");
-                response = objectInputStream.readObject();
+                response = (Response<R>) objectInputStream.readObject();
                 System.out.println("[CLIENT] got response: " + response);
             } catch (Exception ex) {
                 disconnectWithoutException();
                 throw new CJPException(ex);
             }
             disconnectWithoutException();
-            return (Response) response;
+            return response;
         });
     }
     

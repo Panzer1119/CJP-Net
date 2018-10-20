@@ -17,35 +17,38 @@
 package de.codemakers.net.wrapper.sockets;
 
 import de.codemakers.net.entities.Request;
+import de.codemakers.net.entities.Response;
 
 import java.net.InetAddress;
 import java.net.Socket;
-import java.net.UnknownHostException;
 
 public class SingleResponseTest {
     
     public static final int PORT = 2359;
     
-    public static final void main(String[] args) throws UnknownHostException {
+    public static final void main(String[] args) throws Exception {
         final SingleResponseServerSocket singleResponseServerSocket = new SingleResponseServerSocket(PORT) {
             @Override
-            public Object processRequest(Socket socket, Request request) throws Exception {
+            public <T> Response<?> processRequest(Socket socket, Request<T> request) throws Exception {
                 System.out.println(String.format("[SERVER] %s requested: %s", socket, request));
-                if ("error".equals(request)) {
+                if ("error".equals(request.getRequest())) {
                     throw new Exception("Debug Error");
                 }
-                return System.currentTimeMillis();
+                return request.respond((o) -> System.currentTimeMillis());
             }
         };
-        singleResponseServerSocket.startWithoutException();
-        System.out.println("[SERVER] " + SingleResponseServerSocket.class.getSimpleName() + " started");
+        System.out.println(String.format("[SERVER] singleResponseServerSocket started: %s (%s)", singleResponseServerSocket.startWithoutException(), singleResponseServerSocket));
         final SingleResponseSocket singleResponseSocket = new SingleResponseSocket(InetAddress.getLocalHost(), PORT);
-        System.out.println("running: " + singleResponseSocket.isRunning());
+        System.out.println(String.format("[ TEST ] singleResponseSocket running: %s", singleResponseSocket.isRunning()));
+        //
+        singleResponseSocket.requestResponse("test1234").queue((response) -> System.out.println("[CLIENT] Response: " + response), (throwable) -> System.err.println("[CLIENT] Request failed: " + throwable));
+        //
+        Thread.sleep(5000);
         System.out.println(String.format("[CLIENT] response: %s", singleResponseSocket.requestResponse("test").direct()));
-        System.out.println("running: " + singleResponseSocket.isRunning());
+        System.out.println(String.format("[ TEST ] singleResponseSocket running: %s", singleResponseSocket.isRunning()));
         System.out.println(String.format("[CLIENT] response: %s", singleResponseSocket.requestResponse("error").direct()));
-        System.out.println("running: " + singleResponseSocket.isRunning());
-        singleResponseServerSocket.stopWithoutException();
+        System.out.println(String.format("[ TEST ] singleResponseSocket running: %s", singleResponseSocket.isRunning()));
+        System.out.println(String.format("[SERVER] singleResponseServerSocket stopped: %s", singleResponseServerSocket.stopWithoutException()));
         System.exit(0);
     }
     

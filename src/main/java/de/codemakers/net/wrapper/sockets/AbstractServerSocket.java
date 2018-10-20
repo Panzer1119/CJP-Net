@@ -87,7 +87,7 @@ public abstract class AbstractServerSocket implements Closeable, Startable, Stop
     
     public final boolean startThread() {
         if (isRunning()) {
-            return false;
+            //return false; //TODO Dafuq why is this here?!
         }
         if (thread == null) {
             initThread();
@@ -138,8 +138,7 @@ public abstract class AbstractServerSocket implements Closeable, Startable, Stop
         if (serverSocket == null) {
             initServerSocket();
         }
-        startThread();
-        return true;
+        return startThread();
     }
     
     @Override
@@ -163,6 +162,11 @@ public abstract class AbstractServerSocket implements Closeable, Startable, Stop
             localCloseRequested.set(true);
             serverSocket.close();
         }
+    }
+    
+    @Override
+    public String toString() {
+        return "AbstractServerSocket{" + "port=" + port + ", serverSocket=" + serverSocket + ", thread=" + thread + ", running=" + running + ", localCloseRequested=" + localCloseRequested + '}'; //FIXME Debug only
     }
     
 }
