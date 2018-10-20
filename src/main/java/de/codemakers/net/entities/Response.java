@@ -50,7 +50,6 @@ public class Response<T> implements Serializable, Snowflake {
         this(id, new ReturningResult<>(false, throwable, (T) null));
     }
     
-    
     public Response(long id, ReturningResult<T> result) {
         Objects.requireNonNull(result);
         this.id = id;
@@ -82,13 +81,13 @@ public class Response<T> implements Serializable, Snowflake {
         return result.hasThrowable();
     }
     
+    public <R> Request<R> getRequest() {
+        return (Request<R>) request;
+    }
+    
     protected Response<T> setRequest(Request<?> request) {
         this.request = request;
         return this;
-    }
-    
-    public <R> Request<R> getRequest() {
-        return (Request<R>) request;
     }
     
     @Override
