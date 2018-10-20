@@ -16,28 +16,50 @@
 
 package de.codemakers.net.entities;
 
+import de.codemakers.base.action.ReturningAction;
+import de.codemakers.base.entities.results.ReturningResult;
 import de.codemakers.base.util.interfaces.Snowflake;
+import de.codemakers.base.util.tough.ToughFunction;
 
 import java.io.Serializable;
 import java.util.Objects;
 
-public class Request implements Serializable, Snowflake {
+public class Request<T> implements Serializable, Snowflake {
     
-    private final long id;
-    private final Object request;
+    protected final long id;
+    protected final T request;
     
-    public Request(Object request) {
+    public Request(T request) {
         this.id = generateId();
         this.request = request;
     }
     
-    public Request(long id, Object request) {
+    public Request(long id, T request) {
         this.id = id;
         this.request = request;
     }
     
-    public final Object getRequest() {
+    @Override
+    public long getId() {
+        return id;
+    }
+    
+    public T getRequest() {
         return request;
+    }
+    
+    public <R> Response<R> respond(ToughFunction<T, R> function) {
+        Objects.requireNonNull(function);
+        return new Response<>(id, new ReturningResult<>(function, request)).setRequest(this);
+    }
+    
+    public <R> ReturningAction<Response<R>> respondAction(ToughFunction<T, R> function) {
+        return new ReturningAction<>(() -> respond(function));
+    }
+    
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "{" + "id=" + id + ", request=" + request + '}';
     }
     
     @Override
@@ -45,7 +67,7 @@ public class Request implements Serializable, Snowflake {
         if (this == object) {
             return true;
         }
-        if (object == null || getClass() != object.getClass()) {
+        if (object == null || !getClass().isAssignableFrom(object.getClass())) {
             return false;
         }
         final Request request1 = (Request) object;
@@ -55,16 +77,6 @@ public class Request implements Serializable, Snowflake {
     @Override
     public int hashCode() {
         return Objects.hash(id, request);
-    }
-    
-    @Override
-    public String toString() {
-        return getClass().getSimpleName() + "{" + "id=" + id + ", request=" + request + '}';
-    }
-    
-    @Override
-    public long getId() {
-        return id;
     }
     
 }

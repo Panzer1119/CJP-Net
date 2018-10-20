@@ -16,6 +16,7 @@
 
 package de.codemakers.net.entities;
 
+import de.codemakers.base.entities.results.ReturningResult;
 import de.codemakers.base.util.interfaces.Snowflake;
 
 import java.io.Serializable;
@@ -23,44 +24,76 @@ import java.util.Objects;
 
 public class Response<T> implements Serializable, Snowflake {
     
-    private final long id;
-    private final T response;
-    private final Throwable throwable;
+    protected final long id;
+    protected final ReturningResult<T> result;
+    protected transient Request<?> request = null;
     
     public Response(T response) {
-        this(response, null);
+        this(new ReturningResult<>(true, null, response));
     }
     
     public Response(Throwable throwable) {
-        this(null, throwable);
+        this(new ReturningResult<>(false, throwable, (T) null));
     }
     
-    public Response(T response, Throwable throwable) {
+    public Response(ReturningResult<T> result) {
+        Objects.requireNonNull(result);
         this.id = generateId();
-        this.response = response;
-        this.throwable = throwable;
+        this.result = result;
     }
     
-    public Response(long id, T response, Throwable throwable) {
+    public Response(long id, T response) {
+        this(id, new ReturningResult<>(true, null, response));
+    }
+    
+    public Response(long id, Throwable throwable) {
+        this(id, new ReturningResult<>(false, throwable, (T) null));
+    }
+    
+    
+    public Response(long id, ReturningResult<T> result) {
+        Objects.requireNonNull(result);
         this.id = id;
-        this.response = response;
-        this.throwable = throwable;
+        this.result = result;
     }
     
-    public final T getResponse() {
-        return response;
+    @Override
+    public long getId() {
+        return id;
     }
     
-    public final Throwable getThrowable() {
-        return throwable;
+    public ReturningResult<T> getResult() {
+        return result;
     }
     
-    public final boolean isSuccessful() {
-        return throwable == null;
+    public T getResponse() {
+        return result.getResult();
     }
     
-    public final boolean isErrored() {
-        return throwable != null;
+    public Throwable getThrowable() {
+        return result.getThrowable();
+    }
+    
+    public boolean wasSuccessful() {
+        return result.wasSuccessful();
+    }
+    
+    public boolean hasErrored() {
+        return result.hasThrowable();
+    }
+    
+    protected Response<T> setRequest(Request<?> request) {
+        this.request = request;
+        return this;
+    }
+    
+    public <R> Request<R> getRequest() {
+        return (Request<R>) request;
+    }
+    
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "{" + "id=" + id + ", result=" + result + (request == null ? "" : ", request=" + request) + '}';
     }
     
     @Override
@@ -68,26 +101,16 @@ public class Response<T> implements Serializable, Snowflake {
         if (this == object) {
             return true;
         }
-        if (object == null || getClass() != object.getClass()) {
+        if (object == null || !getClass().isAssignableFrom(object.getClass())) {
             return false;
         }
-        final Response<?> response1 = (Response<?>) object;
-        return id == response1.id && Objects.equals(response, response1.response) && Objects.equals(throwable, response1.throwable);
+        final Response<?> that = (Response<?>) object;
+        return id == that.id && Objects.equals(result, that.result);
     }
     
     @Override
     public int hashCode() {
-        return Objects.hash(id, response, throwable);
-    }
-    
-    @Override
-    public String toString() {
-        return getClass().getSimpleName() + "{" + "id=" + id + ", response=" + response + ", throwable=" + throwable + '}';
-    }
-    
-    @Override
-    public long getId() {
-        return id;
+        return Objects.hash(id, result);
     }
     
 }
