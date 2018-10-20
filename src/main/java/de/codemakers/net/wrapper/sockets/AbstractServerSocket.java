@@ -53,7 +53,11 @@ public abstract class AbstractServerSocket implements Closeable, Startable, Stop
     
     private final boolean initThread() {
         if (thread != null) {
-            return false;
+            if (thread.isInterrupted()) {
+                //FIXME What to do?
+            } else {
+                return false;
+            }
         }
         thread = new Thread(() -> {
             running.set(true);
@@ -71,7 +75,6 @@ public abstract class AbstractServerSocket implements Closeable, Startable, Stop
                 }
             } catch (SocketException ex) {
                 final long timestamp = System.currentTimeMillis();
-                System.err.println("ERROR SERVERS SOCKET CLOSED:"); //TODO Debug only
                 try {
                     processStop(timestamp, localCloseRequested.get(), true, ex);
                 } catch (Exception ex2) {
@@ -86,14 +89,14 @@ public abstract class AbstractServerSocket implements Closeable, Startable, Stop
     }
     
     public final boolean startThread() {
-        if (isRunning()) {
-            //return false; //TODO Dafuq why is this here?!
+        if (thread != null && thread.isAlive()) {
+            return false;
         }
-        if (thread == null) {
+        if (thread == null || thread.isInterrupted()) {
             initThread();
         }
         if (serverSocket == null) {
-            throw new IllegalArgumentException("ServerSocket was not created");
+            throw new IllegalArgumentException(ServerSocket.class.getSimpleName() + " was not created");
         }
         thread.start();
         return true;
@@ -166,7 +169,7 @@ public abstract class AbstractServerSocket implements Closeable, Startable, Stop
     
     @Override
     public String toString() {
-        return "AbstractServerSocket{" + "port=" + port + ", serverSocket=" + serverSocket + ", thread=" + thread + ", running=" + running + ", localCloseRequested=" + localCloseRequested + '}'; //FIXME Debug only
+        return "AbstractServerSocket{" + "port=" + port + ", serverSocket=" + serverSocket + ", thread=" + thread + ", running=" + running + ", localCloseRequested=" + localCloseRequested + '}';
     }
     
 }
