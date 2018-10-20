@@ -293,7 +293,6 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
             return false;
         }
         if (socket != null) {
-            System.out.println("[CLIENT] Trying to close SOCKET"); //TODO Debug only
             close();
             socket = null; //TODO Maybe do not set this null? Because if you want to reuse this socket...
             //TODO Set socket to null, because otherwise it can not be reused?
