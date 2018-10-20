@@ -16,8 +16,10 @@
 
 package de.codemakers.net.wrapper.sockets;
 
+import de.codemakers.base.CJP;
 import de.codemakers.base.action.ReturningAction;
 import de.codemakers.base.exceptions.CJPException;
+import de.codemakers.base.util.tough.ToughConsumer;
 import de.codemakers.net.entities.Request;
 import de.codemakers.net.entities.Response;
 import de.codemakers.net.exceptions.NotAcceptedResponseException;
@@ -28,15 +30,28 @@ import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.Objects;
+import java.util.concurrent.Future;
 
 public class SingleResponseSocket extends AbstractSocket {
     
+    protected final CJP cjp;
+    
     public SingleResponseSocket(Socket socket) {
+        this(socket, CJP.createInstance());
+    }
+    
+    public SingleResponseSocket(Socket socket, CJP cjp) {
         super(socket);
+        this.cjp = cjp == null ? CJP.createInstance() : cjp;
     }
     
     public SingleResponseSocket(InetAddress inetAddress, int port) {
+        this(inetAddress, port, CJP.createInstance());
+    }
+    
+    public SingleResponseSocket(InetAddress inetAddress, int port, CJP cjp) {
         super(inetAddress, port);
+        this.cjp = cjp == null ? CJP.createInstance() : cjp;
     }
     
     @Override
@@ -55,7 +70,7 @@ public class SingleResponseSocket extends AbstractSocket {
     }
     
     public <T, R> ReturningAction<Response<R>> requestResponse(T request) {
-        return new ReturningAction<>(() -> {
+        return new ReturningAction<Response<R>>(cjp, () -> {
             Response<R> response = null;
             try {
                 if (!connect(true)) {
@@ -76,7 +91,17 @@ public class SingleResponseSocket extends AbstractSocket {
             }
             disconnectWithoutException();
             return response;
-        });
+        }) {
+            @Override
+            public void queue(ToughConsumer<Response<R>> success, ToughConsumer<Throwable> failure) {
+                super.queueSingle(success, failure);
+            }
+            
+            @Override
+            public Future<Response<R>> submit() {
+                return super.submitSingle();
+            }
+        };
     }
     
 }

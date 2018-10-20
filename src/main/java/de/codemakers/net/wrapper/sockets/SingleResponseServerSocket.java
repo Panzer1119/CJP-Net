@@ -35,21 +35,21 @@ public abstract class SingleResponseServerSocket extends AbstractServerSocket {
     protected boolean multithreaded = true;
     
     public SingleResponseServerSocket(ServerSocket serverSocket) {
-        this(serverSocket, CJP.getInstance());
+        this(serverSocket, CJP.createInstance());
     }
     
     public SingleResponseServerSocket(ServerSocket serverSocket, CJP cjp) {
         super(serverSocket);
-        this.cjp = cjp == null ? CJP.getInstance() : cjp;
+        this.cjp = cjp == null ? CJP.createInstance() : cjp;
     }
     
     public SingleResponseServerSocket(int port) {
-        this(port, CJP.getInstance());
+        this(port, CJP.createInstance());
     }
     
     public SingleResponseServerSocket(int port, CJP cjp) {
         super(port);
-        this.cjp = cjp == null ? CJP.getInstance() : cjp;
+        this.cjp = cjp == null ? CJP.createInstance() : cjp;
     }
     
     public final boolean isMultithreaded() {
