@@ -20,11 +20,14 @@ import de.codemakers.base.action.ReturningAction;
 import de.codemakers.base.exceptions.CJPException;
 import de.codemakers.net.entities.Request;
 import de.codemakers.net.entities.Response;
+import de.codemakers.net.exceptions.NotAcceptedResponseException;
+import de.codemakers.net.exceptions.NotConnectedException;
 
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.Objects;
 
 public class SingleResponseSocket extends AbstractSocket {
     
@@ -55,16 +58,18 @@ public class SingleResponseSocket extends AbstractSocket {
         return new ReturningAction<>(() -> {
             Response<R> response = null;
             try {
-                System.out.println("[CLIENT] starting response requesting (\"" + request + "\")");
-                System.out.println("[CLIENT] connected: " + connect(true));
+                if (!connect(true)) {
+                    throw new NotConnectedException(Response.class.getSimpleName() + " request failed, because the " + getClass().getSimpleName() + " could not connect to the " + SingleResponseServerSocket.class.getSimpleName());
+                }
                 final ObjectOutputStream objectOutputStream = new ObjectOutputStream(getOutputStream());
-                System.out.println("[CLIENT] created " + ObjectOutputStream.class.getSimpleName());
-                objectOutputStream.writeObject(new Request<>(request));
-                System.out.println("[CLIENT] wrote request");
+                final Request<T> request_ = new Request<>(request);
+                objectOutputStream.writeObject(request_);
                 final ObjectInputStream objectInputStream = new ObjectInputStream(getInputStream()); //FIXME Maybe do this before sending the request? because maybe this is too slow and the response can not be received
-                System.out.println("[CLIENT] waiting for response");
                 response = (Response<R>) objectInputStream.readObject();
-                System.out.println("[CLIENT] got response: " + response);
+                Objects.requireNonNull(response);
+                if (response.getId() != request_.getId()) {
+                    throw new NotAcceptedResponseException(response.getClass().getSimpleName() + " id does not match " + request_.getClass().getSimpleName() + " id");
+                }
             } catch (Exception ex) {
                 disconnectWithoutException();
                 throw new CJPException(ex);
