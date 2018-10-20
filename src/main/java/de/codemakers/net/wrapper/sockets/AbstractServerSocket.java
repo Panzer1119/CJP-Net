@@ -17,6 +17,7 @@
 package de.codemakers.net.wrapper.sockets;
 
 import de.codemakers.base.logger.Logger;
+import de.codemakers.base.util.StringUtil;
 import de.codemakers.base.util.interfaces.Startable;
 import de.codemakers.base.util.interfaces.Stoppable;
 
@@ -45,6 +46,10 @@ public abstract class AbstractServerSocket implements Closeable, Startable, Stop
     
     public AbstractServerSocket(int port) {
         this.port = port;
+    }
+    
+    protected String createThreadName() {
+        return String.format("%s-%d.Thread", StringUtil.classToSimpleName(getClass()), port);
     }
     
     protected abstract void processSocket(long timestamp, Socket socket) throws Exception;
@@ -85,6 +90,7 @@ public abstract class AbstractServerSocket implements Closeable, Startable, Stop
                 Logger.handleError(ex); //TODO ignore the Exceptions thrown, if the ServerSocket was stopped by user
             }
         });
+        thread.setName(createThreadName());
         return true;
     }
     

@@ -18,6 +18,7 @@ package de.codemakers.net.wrapper.sockets;
 
 import de.codemakers.base.action.ReturningAction;
 import de.codemakers.base.logger.Logger;
+import de.codemakers.base.util.StringUtil;
 import de.codemakers.base.util.interfaces.Connectable;
 import de.codemakers.base.util.interfaces.Disconnectable;
 import de.codemakers.base.util.interfaces.Startable;
@@ -26,10 +27,7 @@ import de.codemakers.base.util.tough.ToughConsumer;
 import de.codemakers.base.util.tough.ToughFunction;
 
 import java.io.*;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketException;
+import java.net.*;
 import java.nio.channels.AlreadyBoundException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -55,6 +53,10 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
     public AbstractSocket(InetAddress inetAddress, int port) {
         this.inetAddress = inetAddress;
         this.port = port;
+    }
+    
+    protected String createThreadName() {
+        return String.format("%-%s:%d.Thread", StringUtil.classToSimpleName(getClass()), ((inetAddress instanceof Inet6Address) ? "[" + inetAddress.getHostAddress() + "]" : inetAddress.getHostAddress()), port);
     }
     
     protected abstract void processInput(long timestamp, Object input) throws Exception;
@@ -152,6 +154,7 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
                 disconnectWithoutException();
             }
         });
+        thread.setName(createThreadName());
         return true;
     }
     

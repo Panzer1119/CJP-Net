@@ -117,6 +117,7 @@ public abstract class SingleResponseServerSocket extends AbstractServerSocket {
     
     @Override
     protected void processStop(long timestamp, boolean ok, boolean local, Throwable throwable) throws Exception {
+        System.out.println(String.format("[SERVER] processing stop, timestamp=%d, ok=%b, local=%b, throwable=%s", timestamp, ok, local, throwable));
         if (!ok && local) {
             stop();
             start(); //TODO Test this, prevent an infinite loop (but !ok should prevent it from infinite looping, when a user requested the shutdown)
