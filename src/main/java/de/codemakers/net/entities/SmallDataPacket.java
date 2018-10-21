@@ -83,7 +83,6 @@ public class SmallDataPacket implements Serializable {
     
     public static SmallDataPacket[] bytesToSmallDataPackets(byte[] data, Hasher hasher) {
         final SmallDataPacket[] smallDataPackets = new SmallDataPacket[(int) Math.ceil(data.length * 1.0 / MAX_DATA_BYTES)];
-        System.out.println("smallDataPackets.length=" + smallDataPackets.length);
         byte[] temp = new byte[MAX_DATA_BYTES];
         for (short i = 0; i < smallDataPackets.length; i++) {
             if (i == smallDataPackets.length - 1) {

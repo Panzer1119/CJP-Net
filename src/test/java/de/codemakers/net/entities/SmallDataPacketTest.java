@@ -48,6 +48,7 @@ public class SmallDataPacketTest {
         System.out.println("hash64=" + Arrays.toString(HashUtil.XX_HASHER_64.hashWithoutException(data_2)));
         System.out.println(String.format("data_2.length=%d, MAX_DATA_BYTES=%d", data_2.length, SmallDataPacket.MAX_DATA_BYTES));
         final Doublet<SmallDataPacket[], byte[]> smallDataPacketsAndHash = SmallDataPacket.bytesToSmallDataPacketsAndHash(data_2, HashUtil.XX_HASHER_32_FASTEST, HashUtil.XX_HASHER_64);
+        System.out.println("smallDataPackets.length=" + smallDataPacketsAndHash.getA().length);
         System.out.println("smallDataPackets=" + Arrays.toString(smallDataPacketsAndHash.getA()));
         //smallDataPacketsAndHash.getB()[0] = 0; //Only for testing the hash check
         System.out.println("Hash  =" + Arrays.toString(smallDataPacketsAndHash.getB()));
