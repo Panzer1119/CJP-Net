@@ -24,7 +24,7 @@ public class RequestResponseEvent extends NetEvent {
     protected final Object data;
     
     public RequestResponseEvent(Object data) {
-        this(createRandomId(), data);
+        this(nextId(), data);
     }
     
     public RequestResponseEvent(long responseId, Object data) {
