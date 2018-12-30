@@ -45,19 +45,27 @@ public abstract class AbstractSocket {
         return inetAddress;
     }
     
-    public abstract AbstractSocket setInetAddress(InetAddress inetAddress);
+    public AbstractSocket setInetAddress(InetAddress inetAddress) {
+        this.inetAddress = inetAddress;
+        return this;
+    }
     
     public int getPort() {
         return port;
     }
     
-    public abstract AbstractSocket setPort(int port);
+    public AbstractSocket setPort(int port) {
+        this.port = port;
+        return this;
+    }
     
     public Socket getSocket() {
         return socket;
     }
     
     public abstract AbstractSocket setSocket(Socket socket);
+    
+    protected abstract Socket createSocket();
     
     public <T extends OutputStream> T getOutputStream(Class<T> clazz) {
         return (T) outputStream;
