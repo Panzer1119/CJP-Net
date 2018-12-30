@@ -43,7 +43,7 @@ public abstract class AbstractSocket implements Closeable, Connectable, Disconne
         Objects.requireNonNull(inetAddress);
         this.inetAddress = inetAddress;
         this.port = port;
-        //this.socket = connectIntern(); //Not a good idea, maybe you do not want to instantly connect to the server, when this constructor was called
+        //this.socket = createSocket(); //Not a good idea, maybe you do not want to instantly connect to the server, when this constructor was called
     }
     
     public AbstractSocket(Socket socket) {

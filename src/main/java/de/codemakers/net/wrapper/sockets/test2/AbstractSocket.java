@@ -22,7 +22,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.util.Objects;
 
 public abstract class AbstractSocket {
     
@@ -33,17 +32,13 @@ public abstract class AbstractSocket {
     protected InputStream inputStream = null;
     
     public AbstractSocket(InetAddress inetAddress, int port) {
-        this.inetAddress = inetAddress;
-        this.port = port;
+        setInetAddress(inetAddress);
+        setPort(port);
     }
     
     public AbstractSocket(Socket socket) {
-        Objects.requireNonNull(socket);
-        this.inetAddress = socket.getInetAddress();
-        this.port = socket.getPort();
-        this.socket = socket;
-        //this.outputStream = socket.getOutputStream();
-        //this.inputStream = socket.getInputStream();
+        this(socket.getInetAddress(), socket.getPort());
+        setSocket(socket);
     }
     
     public InetAddress getInetAddress() {
@@ -101,5 +96,10 @@ public abstract class AbstractSocket {
     }
     
     public abstract boolean isConnected();
+    
+    @Override
+    public String toString() {
+        return "AbstractSocket{" + "inetAddress=" + inetAddress + ", port=" + port + ", socket=" + socket + ", outputStream=" + outputStream + ", inputStream=" + inputStream + '}';
+    }
     
 }
