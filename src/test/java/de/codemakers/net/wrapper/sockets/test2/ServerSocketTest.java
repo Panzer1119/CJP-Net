@@ -16,6 +16,11 @@
 
 package de.codemakers.net.wrapper.sockets.test2;
 
+import de.codemakers.security.entities.SecureData;
+import de.codemakers.security.interfaces.Decryptor;
+import de.codemakers.security.interfaces.Encryptor;
+
+import javax.crypto.SecretKey;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
@@ -24,6 +29,10 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class ServerSocketTest {
+    
+    public static final SecretKey SECRET_KEY = SecureDataTest.resolveAESSecretKey();
+    public static final Encryptor ENCRYPTOR = SecureDataTest.resolveAESEncryptor(SECRET_KEY);
+    public static final Decryptor DECRYPTOR = SecureDataTest.resolveAESDecryptor(SECRET_KEY);
     
     public static final void main(String[] args) throws Exception {
         final int port = 1234;
@@ -58,9 +67,17 @@ public class ServerSocketTest {
                 Object object = null;
                 while ((object = advancedSocket.getInputStream(ObjectInputStream.class).readObject()) != null) {
                     System.out.println("[SERVER] got: \"" + object + "\"");
-                    if (object.equals("shutdown")) {
-                        shutdownRequested = true;
-                        break outer;
+                    if (object instanceof SecureData) {
+                        final SecureData secureData = (SecureData) object;
+                        final byte[] bytes = secureData.decrypt(DECRYPTOR);
+                        final String string = new String(bytes);
+                        System.out.println("[SERVER] got secure (undecrypted): \"" + new String(secureData.toBytes()) + "\"");
+                        System.out.println("[SERVER] got secure   (decrypted): \"" + string + "\"");
+                    } else {
+                        if (object.equals("shutdown")) {
+                            shutdownRequested = true;
+                            break outer;
+                        }
                     }
                 }
             }

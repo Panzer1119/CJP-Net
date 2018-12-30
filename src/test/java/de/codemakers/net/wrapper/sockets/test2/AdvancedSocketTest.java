@@ -16,6 +16,11 @@
 
 package de.codemakers.net.wrapper.sockets.test2;
 
+import de.codemakers.security.entities.SecureData;
+import de.codemakers.security.interfaces.Decryptor;
+import de.codemakers.security.interfaces.Encryptor;
+
+import javax.crypto.SecretKey;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
@@ -23,6 +28,10 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class AdvancedSocketTest {
+    
+    public static final SecretKey SECRET_KEY = SecureDataTest.resolveAESSecretKey();
+    public static final Encryptor ENCRYPTOR = SecureDataTest.resolveAESEncryptor(SECRET_KEY);
+    public static final Decryptor DECRYPTOR = SecureDataTest.resolveAESDecryptor(SECRET_KEY);
     
     public static final void main(String[] args) throws Exception {
         final InetAddress inetAddress = InetAddress.getLocalHost();
@@ -53,6 +62,11 @@ public class AdvancedSocketTest {
         System.out.println("[CLIENT] advancedSocket 4=" + advancedSocket);
         Thread.sleep(1000);
         advancedSocket.getOutputStream(ObjectOutputStream.class).writeObject("Test String");
+        Thread.sleep(1000);
+        final String string_1 = "This is a test String, it even has an \"!\" in it!";
+        final byte[] bytes_1 = string_1.getBytes();
+        final SecureData secureData_1 = new SecureData(bytes_1, ENCRYPTOR);
+        advancedSocket.getOutputStream(ObjectOutputStream.class).writeObject(secureData_1);
         Thread.sleep(3000);
         //advancedSocket.getOutputStream(ObjectOutputStream.class).writeObject(null);
         advancedSocket.getOutputStream(ObjectOutputStream.class).writeObject("shutdown");

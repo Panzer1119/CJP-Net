@@ -28,8 +28,6 @@ import java.util.Objects;
 
 public abstract class NormalSocket extends AbstractSocket implements Closeable, Connectable, Disconnectable {
     
-    //protected final AtomicBoolean connected = new AtomicBoolean(false);
-    //protected final AtomicBoolean localCloseRequested = new AtomicBoolean(false);
     protected boolean connected = false;
     protected boolean localCloseRequested = false;
     
@@ -60,10 +58,6 @@ public abstract class NormalSocket extends AbstractSocket implements Closeable, 
         setInetAddress(socket.getInetAddress());
         setPort(socket.getPort());
         this.socket = socket;
-        System.out.println(socket.isConnected());
-        System.out.println(socket.isClosed());
-        //connected.set(false);
-        //connected.set(socket.isConnected() && !socket.isClosed());
         connected = socket.isConnected() && !socket.isClosed();
         if (connected) {
             try {
@@ -75,9 +69,8 @@ public abstract class NormalSocket extends AbstractSocket implements Closeable, 
         return this;
     }
     
-    @Override
     public boolean isConnected() {
-        return connected && socket != null && socket.isConnected() && !socket.isClosed();
+        return connected;
     }
     
     protected abstract void connected() throws Exception;
@@ -90,14 +83,12 @@ public abstract class NormalSocket extends AbstractSocket implements Closeable, 
             return false;
         }
         closeIntern();
-        //localCloseRequested.set(false);
         localCloseRequested = false;
         if (reconnect) {
             socket = null;
         }
         socket = createSocket(reconnect);
-        //connected.set(socket != null);
-        connected = socket != null;
+        connected = socket != null && socket.isConnected() && !socket.isClosed();
         if (isConnected()) {
             connected();
             return true;
@@ -123,7 +114,6 @@ public abstract class NormalSocket extends AbstractSocket implements Closeable, 
     
     @Override
     public void close() throws IOException {
-        //localCloseRequested.set(true);
         localCloseRequested = true;
         if (outputStream != null) {
             outputStream.close();
@@ -134,7 +124,6 @@ public abstract class NormalSocket extends AbstractSocket implements Closeable, 
         if (socket != null) {
             socket.close();
         }
-        //connected.set(false);
         connected = false;
     }
     

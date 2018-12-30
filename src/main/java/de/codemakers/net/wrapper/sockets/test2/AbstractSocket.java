@@ -95,8 +95,6 @@ public abstract class AbstractSocket {
         return this;
     }
     
-    public abstract boolean isConnected();
-    
     @Override
     public String toString() {
         return "AbstractSocket{" + "inetAddress=" + inetAddress + ", port=" + port + ", socket=" + socket + ", outputStream=" + outputStream + ", inputStream=" + inputStream + '}';
