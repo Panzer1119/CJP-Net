@@ -29,11 +29,13 @@ public class AdvancedSocket extends NormalSocket {
         super(socket);
     }
     
+    /*
     @Override
     protected void connected() throws Exception {
         outputStream = socket.getOutputStream();
         inputStream = socket.getInputStream();
     }
+    */
     
     @Override
     protected Socket createSocket(boolean reconnect) throws Exception {
