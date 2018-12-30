@@ -40,19 +40,6 @@ public abstract class NormalSocket extends AbstractSocket implements Closeable, 
     }
     
     @Override
-    public NormalSocket setInetAddress(InetAddress inetAddress) {
-        Objects.requireNonNull(inetAddress);
-        this.inetAddress = inetAddress;
-        return this;
-    }
-    
-    @Override
-    public NormalSocket setPort(int port) {
-        this.port = port;
-        return this;
-    }
-    
-    @Override
     public NormalSocket setSocket(Socket socket) {
         Objects.requireNonNull(socket);
         setInetAddress(socket.getInetAddress());
@@ -73,10 +60,6 @@ public abstract class NormalSocket extends AbstractSocket implements Closeable, 
         return connected;
     }
     
-    protected abstract void connected() throws Exception;
-    
-    protected abstract Socket createSocket(boolean reconnect) throws Exception;
-    
     @Override
     public boolean connect(boolean reconnect) throws Exception {
         if (isConnected()) {
@@ -87,7 +70,7 @@ public abstract class NormalSocket extends AbstractSocket implements Closeable, 
         if (reconnect) {
             socket = null;
         }
-        socket = createSocket(reconnect);
+        socket = createSocket();
         connected = socket != null && socket.isConnected() && !socket.isClosed();
         if (isConnected()) {
             connected();

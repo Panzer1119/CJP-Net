@@ -65,7 +65,7 @@ public abstract class AbstractSocket {
     
     public abstract AbstractSocket setSocket(Socket socket);
     
-    protected abstract Socket createSocket();
+    protected abstract Socket createSocket() throws Exception;
     
     public <T extends OutputStream> T getOutputStream(Class<T> clazz) {
         return (T) outputStream;
