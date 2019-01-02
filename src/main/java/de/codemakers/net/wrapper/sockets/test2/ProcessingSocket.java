@@ -74,7 +74,7 @@ public abstract class ProcessingSocket<I extends InputStream, O extends OutputSt
     protected abstract void onInput(D input, long timestamp) throws Exception;
     
     public boolean initInputProcessor() {
-        if (isConnected() || isRunning()) {
+        if (isRunning()) {
             return false;
         }
         thread = new Thread(() -> createInputProcessor(getInputStream(), getOutputStream()).run((throwable) -> error(throwable)));

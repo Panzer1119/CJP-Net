@@ -73,10 +73,14 @@ public class ServerSocketTest {
                         final String string = new String(bytes);
                         System.out.println("[SERVER] got secure (undecrypted): \"" + new String(secureData.toBytes()) + "\"");
                         System.out.println("[SERVER] got secure   (decrypted): \"" + string + "\"");
-                    } else {
-                        if (object.equals("shutdown")) {
+                    } else if (object instanceof String) {
+                        String string = (String) object;
+                        if (string.equals("shutdown")) {
                             shutdownRequested = true;
                             break outer;
+                        } else if (string.startsWith("echo")) {
+                            string = string.substring("echo".length()).trim();
+                            advancedSocket.getOutputStream(ObjectOutputStream.class).writeObject(string);
                         }
                     }
                 }
