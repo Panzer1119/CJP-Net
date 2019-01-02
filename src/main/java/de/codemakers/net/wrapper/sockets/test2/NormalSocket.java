@@ -16,9 +16,9 @@
 
 package de.codemakers.net.wrapper.sockets.test2;
 
-import de.codemakers.base.logger.Logger;
 import de.codemakers.base.util.interfaces.Connectable;
 import de.codemakers.base.util.interfaces.Disconnectable;
+import de.codemakers.net.exceptions.NetRuntimeException;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -28,8 +28,8 @@ import java.util.Objects;
 
 public abstract class NormalSocket extends AbstractSocket implements Closeable, Connectable, Disconnectable {
     
-    protected boolean connected = false;
-    protected boolean localCloseRequested = false;
+    protected volatile boolean connected = false;
+    protected volatile boolean localCloseRequested = false;
     
     public NormalSocket(InetAddress inetAddress, int port) {
         super(inetAddress, port);
@@ -39,6 +39,16 @@ public abstract class NormalSocket extends AbstractSocket implements Closeable, 
         super(socket);
     }
     
+    public boolean isConnected() {
+        return connected;
+    }
+    
+    public boolean isLocalCloseRequested() {
+        return localCloseRequested;
+    }
+    
+    protected abstract void onConnection(boolean successful) throws Exception;
+    
     @Override
     public NormalSocket setSocket(Socket socket) {
         Objects.requireNonNull(socket);
@@ -46,18 +56,12 @@ public abstract class NormalSocket extends AbstractSocket implements Closeable, 
         setPort(socket.getPort());
         this.socket = socket;
         connected = socket.isConnected() && !socket.isClosed();
-        if (connected) {
-            try {
-                connected();
-            } catch (Exception ex) {
-                Logger.handleError(ex);
-            }
+        try {
+            onConnection(isConnected());
+        } catch (Exception ex) {
+            throw new NetRuntimeException(ex);
         }
         return this;
-    }
-    
-    public boolean isConnected() {
-        return connected;
     }
     
     @Override
@@ -72,11 +76,9 @@ public abstract class NormalSocket extends AbstractSocket implements Closeable, 
         }
         socket = createSocket();
         connected = socket != null && socket.isConnected() && !socket.isClosed();
-        if (isConnected()) {
-            connected();
-            return true;
-        }
-        return false;
+        final boolean success = isConnected();
+        onConnection(success);
+        return success;
     }
     
     @Override

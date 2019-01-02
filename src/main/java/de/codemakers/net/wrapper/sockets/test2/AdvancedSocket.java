@@ -29,16 +29,14 @@ public class AdvancedSocket extends NormalSocket {
         super(socket);
     }
     
-    /*
     @Override
-    protected void connected() throws Exception {
+    protected void onConnection(boolean successful) throws Exception {
         outputStream = socket.getOutputStream();
         inputStream = socket.getInputStream();
     }
-    */
     
     @Override
-    protected Socket createSocket(boolean reconnect) throws Exception {
+    protected Socket createSocket() throws Exception {
         return new Socket(inetAddress, port);
     }
     
