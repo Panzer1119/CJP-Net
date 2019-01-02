@@ -30,11 +30,12 @@ public class AdvancedSocket extends NormalSocket {
     }
     
     @Override
-    protected void onConnection(boolean successful) throws Exception {
+    protected boolean onConnection(boolean successful) throws Exception {
         if (successful) {
             outputStream = socket.getOutputStream();
             inputStream = socket.getInputStream();
         }
+        return successful;
     }
     
     @Override

@@ -63,7 +63,7 @@ public abstract class NormalSocket extends AbstractSocket implements Closeable, 
         this.localCloseRequested = false;
     }
     
-    protected abstract void onConnection(boolean successful) throws Exception;
+    protected abstract boolean onConnection(boolean successful) throws Exception;
     
     @Override
     public NormalSocket setSocket(Socket socket) {
@@ -93,9 +93,7 @@ public abstract class NormalSocket extends AbstractSocket implements Closeable, 
         socket = createSocket();
         isErrored = false;
         connected = socket != null && socket.isConnected() && !socket.isClosed();
-        final boolean success = isConnected();
-        onConnection(success);
-        return success;
+        return onConnection(isConnected());
     }
     
     @Override
