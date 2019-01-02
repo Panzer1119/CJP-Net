@@ -71,7 +71,7 @@ public abstract class ProcessingSocket<I extends InputStream, O extends OutputSt
     
     protected abstract ToughRunnable createInputProcessor(I inputStream, O outputStream);
     
-    public abstract void onInput(D input, long timestamp) throws Exception;
+    protected abstract void onInput(D input, long timestamp) throws Exception;
     
     public boolean initInputProcessor() {
         if (isConnected() || isRunning()) {
