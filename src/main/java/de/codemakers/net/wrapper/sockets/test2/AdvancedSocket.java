@@ -42,7 +42,7 @@ public class AdvancedSocket extends NormalSocket {
     
     @Override
     public String toString() {
-        return "AdvancedSocket{" + "connected=" + connected + ", localCloseRequested=" + localCloseRequested + ", inetAddress=" + inetAddress + ", port=" + port + ", socket=" + socket + ", outputStream=" + outputStream + ", inputStream=" + inputStream + '}';
+        return "AdvancedSocket{" + "connected=" + connected + ", localCloseRequested=" + localCloseRequested + ", isErrored=" + isErrored + ", error=" + error + ", inetAddress=" + inetAddress + ", port=" + port + ", socket=" + socket + ", outputStream=" + outputStream + ", inputStream=" + inputStream + '}';
     }
     
 }

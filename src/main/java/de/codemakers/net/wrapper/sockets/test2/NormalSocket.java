@@ -30,6 +30,8 @@ public abstract class NormalSocket extends AbstractSocket implements Closeable, 
     
     protected volatile boolean connected = false;
     protected volatile boolean localCloseRequested = false;
+    protected volatile boolean isErrored = false;
+    protected volatile Throwable error = null;
     
     public NormalSocket(InetAddress inetAddress, int port) {
         super(inetAddress, port);
@@ -40,11 +42,25 @@ public abstract class NormalSocket extends AbstractSocket implements Closeable, 
     }
     
     public boolean isConnected() {
-        return connected;
+        return connected && !isErrored;
     }
     
     public boolean isLocalCloseRequested() {
         return localCloseRequested;
+    }
+    
+    public boolean isErrored() {
+        return isErrored;
+    }
+    
+    public Throwable getError() {
+        return error;
+    }
+    
+    protected void error(Throwable error) {
+        this.isErrored = true;
+        this.error = error;
+        this.localCloseRequested = false;
     }
     
     protected abstract void onConnection(boolean successful) throws Exception;
@@ -75,6 +91,7 @@ public abstract class NormalSocket extends AbstractSocket implements Closeable, 
             socket = null;
         }
         socket = createSocket();
+        isErrored = false;
         connected = socket != null && socket.isConnected() && !socket.isClosed();
         final boolean success = isConnected();
         onConnection(success);
@@ -86,6 +103,7 @@ public abstract class NormalSocket extends AbstractSocket implements Closeable, 
         if (!isConnected()) {
             return false;
         }
+        localCloseRequested = true;
         closeIntern();
         return true;
     }
@@ -99,7 +117,6 @@ public abstract class NormalSocket extends AbstractSocket implements Closeable, 
     
     @Override
     public void close() throws IOException {
-        localCloseRequested = true;
         if (outputStream != null) {
             outputStream.close();
         }
@@ -114,7 +131,7 @@ public abstract class NormalSocket extends AbstractSocket implements Closeable, 
     
     @Override
     public String toString() {
-        return "NormalSocket{" + "connected=" + connected + ", localCloseRequested=" + localCloseRequested + ", inetAddress=" + inetAddress + ", port=" + port + ", socket=" + socket + ", outputStream=" + outputStream + ", inputStream=" + inputStream + '}';
+        return "NormalSocket{" + "connected=" + connected + ", localCloseRequested=" + localCloseRequested + ", isErrored=" + isErrored + ", error=" + error + ", inetAddress=" + inetAddress + ", port=" + port + ", socket=" + socket + ", outputStream=" + outputStream + ", inputStream=" + inputStream + '}';
     }
     
 }
