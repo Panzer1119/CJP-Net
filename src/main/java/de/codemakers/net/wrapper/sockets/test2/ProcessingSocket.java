@@ -20,10 +20,12 @@ import de.codemakers.base.util.interfaces.Startable;
 import de.codemakers.base.util.interfaces.Stoppable;
 import de.codemakers.base.util.tough.ToughRunnable;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 
-public abstract class ProcessingSocket extends AdvancedSocket implements Startable, Stoppable {
+public abstract class ProcessingSocket<I extends InputStream, O extends OutputStream> extends AdvancedSocket implements Startable, Stoppable {
     
     protected volatile Thread thread = null;
     protected volatile boolean stopRequested = false;
@@ -36,7 +38,38 @@ public abstract class ProcessingSocket extends AdvancedSocket implements Startab
         super(socket);
     }
     
-    protected abstract ToughRunnable createInputProcessor();
+    public boolean isRunning() {
+        return thread != null && thread.isAlive();
+    }
+    
+    public boolean isStopRequested() {
+        return stopRequested;
+    }
+    
+    @Override
+    public I getInputStream() {
+        return super.getInputStream();
+    }
+    
+    @Override
+    public O getOutputStream() {
+        return super.getOutputStream();
+    }
+    
+    @Override
+    protected void onConnection(boolean successful) throws Exception {
+        super.onConnection(successful);
+        if (successful) {
+            processOutputStream(this::toInternOutputStream);
+            processInputStream(this::toInternInputStream);
+        }
+    }
+    
+    abstract O toInternOutputStream(OutputStream outputStream) throws Exception;
+    
+    abstract I toInternInputStream(InputStream inputStream) throws Exception;
+    
+    protected abstract ToughRunnable createInputProcessor(I inputStream, O outputStream);
     
     public abstract void onInput(Object input) throws Exception;
     
@@ -44,16 +77,8 @@ public abstract class ProcessingSocket extends AdvancedSocket implements Startab
         if (isConnected() || isRunning()) {
             return false;
         }
-        thread = new Thread(() -> createInputProcessor().run((throwable) -> error(throwable)));
+        thread = new Thread(() -> createInputProcessor(getInputStream(), getOutputStream()).run((throwable) -> error(throwable)));
         return thread != null;
-    }
-    
-    public boolean isRunning() {
-        return thread != null && thread.isAlive();
-    }
-    
-    public boolean isStopRequested() {
-        return stopRequested;
     }
     
     @Override
