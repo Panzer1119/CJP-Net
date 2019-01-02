@@ -17,6 +17,7 @@
 package de.codemakers.net.wrapper.sockets.test2;
 
 import de.codemakers.base.util.tough.ToughRunnable;
+import de.codemakers.net.exceptions.NetRuntimeException;
 
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -45,17 +46,22 @@ public class ProcessingSocketTest {
             @Override
             protected ToughRunnable createInputProcessor(ObjectInputStream inputStream, ObjectOutputStream outputStream) {
                 return () -> {
-                    while (!isLocalCloseRequested() && !isStopRequested()) {
-                        final Object input = inputStream.readObject();
-                        final long timestamp = System.currentTimeMillis();
-                        if (input == null) {
-                            break;
+                    try {
+                        while (!isLocalCloseRequested() && !isStopRequested()) {
+                            final Object input = inputStream.readObject();
+                            final long timestamp = System.currentTimeMillis();
+                            if (input == null) {
+                                break;
+                            }
+                            try {
+                                onInput(input, timestamp);
+                            } catch (Exception ex) {
+                                System.err.println("[CLIENT] input error " + ex);
+                            }
                         }
-                        try {
-                            onInput(input, timestamp);
-                        } catch (Exception ex) {
-                            System.err.println("[CLIENT] input error " + ex);
-                        }
+                    } catch (Exception ex) {
+                        outputStream.close(); //TODO Good?
+                        throw new NetRuntimeException(ex);
                     }
                     outputStream.close(); //TODO Good?
                 };
