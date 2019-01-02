@@ -25,7 +25,7 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 
-public abstract class ProcessingSocket<I extends InputStream, O extends OutputStream> extends AdvancedSocket implements Startable, Stoppable {
+public abstract class ProcessingSocket<I extends InputStream, O extends OutputStream, D> extends AdvancedSocket implements Startable, Stoppable {
     
     protected volatile Thread thread = null;
     protected volatile boolean stopRequested = false;
@@ -71,7 +71,7 @@ public abstract class ProcessingSocket<I extends InputStream, O extends OutputSt
     
     protected abstract ToughRunnable createInputProcessor(I inputStream, O outputStream);
     
-    public abstract void onInput(Object input) throws Exception;
+    public abstract void onInput(D input, long timestamp) throws Exception;
     
     public boolean initInputProcessor() {
         if (isConnected() || isRunning()) {
