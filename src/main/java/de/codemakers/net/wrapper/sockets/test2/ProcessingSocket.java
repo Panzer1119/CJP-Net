@@ -65,6 +65,11 @@ public abstract class ProcessingSocket<I extends InputStream, O extends OutputSt
         return successful;
     }
     
+    @Override
+    protected boolean onDisconnection() throws Exception {
+        return stop();
+    }
+    
     abstract O toInternOutputStream(OutputStream outputStream) throws Exception;
     
     abstract I toInternInputStream(InputStream inputStream) throws Exception;

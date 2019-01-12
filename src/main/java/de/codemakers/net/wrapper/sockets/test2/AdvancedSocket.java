@@ -67,6 +67,10 @@ public class AdvancedSocket extends AbstractSocket implements Closeable, Connect
         return successful;
     }
     
+    protected boolean onDisconnection() throws Exception {
+        return true;
+    }
+    
     @Override
     public AdvancedSocket setSocket(Socket socket) {
         Objects.requireNonNull(socket);
