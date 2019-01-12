@@ -17,6 +17,8 @@
 package de.codemakers.net.wrapper.sockets.test2;
 
 import de.codemakers.base.util.tough.ToughRunnable;
+import de.codemakers.net.entities.NetCommand;
+import de.codemakers.net.entities.NetObject;
 import de.codemakers.net.exceptions.NetRuntimeException;
 
 import java.io.InputStream;
@@ -24,10 +26,16 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class ProcessingSocketTest {
+    
+    public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
     
     public static void main(String[] args) throws Exception {
         final InetAddress inetAddress = InetAddress.getLocalHost();
@@ -49,12 +57,25 @@ public class ProcessingSocketTest {
                     try {
                         while (!isLocalCloseRequested() && !isStopRequested()) {
                             final Object input = inputStream.readObject();
-                            final long timestamp = System.currentTimeMillis();
+                            //final long timestamp = System.currentTimeMillis();
+                            //final Instant instant = Instant.ofEpochMilli(timestamp);
+                            final Instant instant = Instant.now();
                             if (input == null) {
                                 break;
                             }
+                            final String timestamp_string = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault()).format(DATE_TIME_FORMATTER);
                             try {
-                                System.out.println("[CLIENT][" + timestamp + "] input: \"" + input + "\"");
+                                if (input instanceof NetObject) {
+                                    final NetObject netObject = (NetObject) input;
+                                    if (input instanceof NetCommand) {
+                                        final NetCommand netCommand = (NetCommand) input;
+                                        System.out.println(String.format("[CLIENT][%s][%d] %s: \"%s\"", timestamp_string, netCommand.getId(), NetCommand.class.getSimpleName(), netCommand));
+                                    } else {
+                                        System.out.println(String.format("[CLIENT][%s][%d] %s: \"%s\"", timestamp_string, netObject.getId(), NetObject.class.getSimpleName(), netObject));
+                                    }
+                                } else {
+                                    System.out.println(String.format("[CLIENT][%s] input: \"%s\"", timestamp_string, input));
+                                }
                             } catch (Exception ex) {
                                 System.err.println("[CLIENT] input error " + ex);
                             }
@@ -62,13 +83,11 @@ public class ProcessingSocketTest {
                     } catch (Exception ex) {
                         outputStream.close(); //TODO Good?
                         throw new NetRuntimeException(ex);
-                    }
-                    outputStream.close(); //TODO Good?
+                    } outputStream.close(); //TODO Good?
                 };
             }
             
-        };
-        System.out.println("[CLIENT] processingSocket=" + processingSocket);
+        }; System.out.println("[CLIENT] processingSocket=" + processingSocket);
         if (processingSocket.connect()) {
             System.out.println("[CLIENT] processingSocket=" + processingSocket);
             if (processingSocket.start()) {
