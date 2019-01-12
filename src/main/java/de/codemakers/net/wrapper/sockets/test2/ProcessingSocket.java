@@ -80,7 +80,7 @@ public abstract class ProcessingSocket<I extends InputStream, O extends OutputSt
         if (isRunning()) {
             return false;
         }
-        thread = new Thread(() -> createInputProcessor(getInputStream(), getOutputStream()).run((throwable) -> error(throwable)));
+        thread = new Thread(() -> createInputProcessor(getInputStream(), getOutputStream()).run(this::error));
         return thread != null;
     }
     
