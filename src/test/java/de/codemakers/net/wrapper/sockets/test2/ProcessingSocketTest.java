@@ -32,10 +32,14 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class ProcessingSocketTest {
     
     public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
+    public static final AtomicLong PING = new AtomicLong(Long.MIN_VALUE);
+    
+    public static ProcessingSocket<ObjectInputStream, ObjectOutputStream, Object> PROCESSING_SOCKET = null;
     
     public static void main(String[] args) throws Exception {
         final InetAddress inetAddress = InetAddress.getLocalHost();
@@ -64,12 +68,32 @@ public class ProcessingSocketTest {
                                 break;
                             }
                             final String timestamp_string = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault()).format(DATE_TIME_FORMATTER);
+                            System.out.println(String.format("[CLIENT][%s] RAW: \"%s\"", timestamp_string, input));
                             try {
                                 if (input instanceof NetObject) {
                                     final NetObject netObject = (NetObject) input;
                                     if (input instanceof NetCommand) {
                                         final NetCommand netCommand = (NetCommand) input;
-                                        System.out.println(String.format("[CLIENT][%s][%d] %s: \"%s\"", timestamp_string, netCommand.getId(), NetCommand.class.getSimpleName(), netCommand));
+                                        switch (netCommand.getCommand()) {
+                                            case PING:
+                                                System.out.println(String.format("[CLIENT][%s] got ping from SERVER (%s)", timestamp_string, netCommand.getId(), netCommand.getObject()));
+                                                outputStream.writeObject(new NetCommand(NetCommand.Command.PONG, instant.toEpochMilli()));
+                                                break;
+                                            case PONG:
+                                                System.out.println(String.format("[CLIENT][%s] got pong from SERVER (%s)", timestamp_string, netCommand.getId(), netCommand.getObject()));
+                                                final long pong = instant.toEpochMilli();
+                                                final long duration = pong - PING.get();
+                                                System.out.println(String.format("[CLIENT][%s] time from ping to pong: %d ms", timestamp_string, duration));
+                                                break;
+                                            case START:
+                                            case STOP:
+                                            case CONNECT:
+                                            case DISCONNECT:
+                                            case CUSTOM:
+                                            case UNKNOWN:
+                                                System.out.println(String.format("[CLIENT][%s][%d] %s: \"%s\"", timestamp_string, netCommand.getId(), NetCommand.class.getSimpleName(), netCommand));
+                                                break;
+                                        }
                                     } else {
                                         System.out.println(String.format("[CLIENT][%s][%d] %s: \"%s\"", timestamp_string, netObject.getId(), NetObject.class.getSimpleName(), netObject));
                                     }
@@ -87,7 +111,9 @@ public class ProcessingSocketTest {
                 };
             }
             
-        }; System.out.println("[CLIENT] processingSocket=" + processingSocket);
+        };
+        PROCESSING_SOCKET = processingSocket;
+        System.out.println("[CLIENT] processingSocket=" + processingSocket);
         if (processingSocket.connect()) {
             System.out.println("[CLIENT] processingSocket=" + processingSocket);
             if (processingSocket.start()) {
@@ -115,7 +141,9 @@ public class ProcessingSocketTest {
             processingSocket.getOutputStream().writeObject("Test String");
             Thread.sleep(1000);
             processingSocket.getOutputStream().writeObject("echo Test1234");
-            Thread.sleep(500);
+            Thread.sleep(250);
+            ping();
+            Thread.sleep(250);
             for (int i = 0; i < 10; i++) {
                 processingSocket.getOutputStream().writeObject("echo " + Math.random());
                 Thread.sleep(100);
@@ -125,6 +153,11 @@ public class ProcessingSocketTest {
         } else {
             System.err.println("[CLIENT] connection failed");
         }
+    }
+    
+    public static void ping() throws Exception {
+        PING.set(System.currentTimeMillis());
+        PROCESSING_SOCKET.getOutputStream().writeObject(new NetCommand(NetCommand.Command.PING, PING.get()));
     }
     
     //protected abstract void onInput(D input, long timestamp) throws Exception;
