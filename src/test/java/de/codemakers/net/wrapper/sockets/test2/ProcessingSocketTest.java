@@ -54,7 +54,7 @@ public class ProcessingSocketTest {
                                 break;
                             }
                             try {
-                                onInput(input, timestamp);
+                                System.out.println("[CLIENT][" + timestamp + "] input: \"" + input + "\"");
                             } catch (Exception ex) {
                                 System.err.println("[CLIENT] input error " + ex);
                             }
@@ -67,10 +67,6 @@ public class ProcessingSocketTest {
                 };
             }
             
-            @Override
-            protected void onInput(Object input, long timestamp) throws Exception {
-                System.out.println("[CLIENT][" + timestamp + "] input: \"" + input + "\"");
-            }
         };
         System.out.println("[CLIENT] processingSocket=" + processingSocket);
         if (processingSocket.connect()) {
@@ -106,5 +102,7 @@ public class ProcessingSocketTest {
             System.err.println("[CLIENT] connection failed");
         }
     }
+    
+    //protected abstract void onInput(D input, long timestamp) throws Exception;
     
 }
