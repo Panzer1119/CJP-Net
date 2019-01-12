@@ -96,7 +96,12 @@ public class ProcessingSocketTest {
             processingSocket.getOutputStream().writeObject("Test String");
             Thread.sleep(1000);
             processingSocket.getOutputStream().writeObject("echo Test1234");
-            Thread.sleep(1000);
+            Thread.sleep(500);
+            for (int i = 0; i < 10; i++) {
+                processingSocket.getOutputStream().writeObject("echo " + Math.random());
+                Thread.sleep(100);
+            }
+            Thread.sleep(500);
             processingSocket.getOutputStream().writeObject("shutdown");
         } else {
             System.err.println("[CLIENT] connection failed");
