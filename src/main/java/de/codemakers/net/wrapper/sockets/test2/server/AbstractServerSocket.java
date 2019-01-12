@@ -49,4 +49,9 @@ public abstract class AbstractServerSocket {
     
     protected abstract ServerSocket createServerSocket() throws Exception;
     
+    @Override
+    public String toString() {
+        return "AbstractServerSocket{" + "port=" + port + ", serverSocket=" + serverSocket + '}';
+    }
+    
 }
