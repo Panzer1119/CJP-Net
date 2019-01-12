@@ -43,6 +43,10 @@ public class NetCommand extends NetObject {
         return (T) object;
     }
     
+    public <T> T getObject(Class<T> clazz) {
+        return (T) object;
+    }
+    
     @Override
     public boolean equals(Object object) {
         if (this == object) {
