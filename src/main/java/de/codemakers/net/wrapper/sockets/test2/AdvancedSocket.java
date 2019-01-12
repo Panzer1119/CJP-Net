@@ -127,6 +127,7 @@ public class AdvancedSocket extends AbstractSocket implements Closeable, Connect
             return false;
         }
         localCloseRequested = true;
+        onDisconnection();
         closeIntern();
         return true;
     }
