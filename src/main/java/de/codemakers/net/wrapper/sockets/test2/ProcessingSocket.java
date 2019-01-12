@@ -19,7 +19,6 @@ package de.codemakers.net.wrapper.sockets.test2;
 import de.codemakers.base.util.interfaces.Startable;
 import de.codemakers.base.util.interfaces.Stoppable;
 import de.codemakers.base.util.tough.ToughRunnable;
-import de.codemakers.net.exceptions.NetException;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -59,9 +58,6 @@ public abstract class ProcessingSocket<I extends InputStream, O extends OutputSt
     
     @Override
     protected boolean onConnection(boolean successful) throws Exception {
-        if (!super.onConnection(successful)) {
-            throw new NetException();
-        }
         if (successful) {
             processOutputStream(this::toInternOutputStream);
             processInputStream(this::toInternInputStream);
