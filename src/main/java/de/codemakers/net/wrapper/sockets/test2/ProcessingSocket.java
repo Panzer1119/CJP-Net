@@ -70,9 +70,9 @@ public abstract class ProcessingSocket<I extends InputStream, O extends OutputSt
         return stop();
     }
     
-    abstract O toInternOutputStream(OutputStream outputStream) throws Exception;
+    protected abstract O toInternOutputStream(OutputStream outputStream) throws Exception;
     
-    abstract I toInternInputStream(InputStream inputStream) throws Exception;
+    protected abstract I toInternInputStream(InputStream inputStream) throws Exception;
     
     protected abstract ToughRunnable createInputProcessor(I inputStream, O outputStream);
     
