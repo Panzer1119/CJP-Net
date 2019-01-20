@@ -26,7 +26,7 @@ public class NetObjectHolder<T> extends NetObject {
         this.object = object;
     }
     
-    public NetObjectHolder(NetEndpoint source, NetEndpoint destination, T object) {
+    public NetObjectHolder(T object, NetEndpoint source, NetEndpoint destination) {
         super(source, destination);
         this.object = object;
     }
@@ -36,7 +36,7 @@ public class NetObjectHolder<T> extends NetObject {
         this.object = object;
     }
     
-    public NetObjectHolder(long id, NetEndpoint source, NetEndpoint destination, T object) {
+    public NetObjectHolder(long id, T object, NetEndpoint source, NetEndpoint destination) {
         super(id, source, destination);
         this.object = object;
     }
