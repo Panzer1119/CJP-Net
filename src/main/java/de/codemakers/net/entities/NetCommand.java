@@ -22,22 +22,22 @@ public class NetCommand extends NetObjectHolder<Object> {
     
     private final Command command;
     
-    public NetCommand(Object object, Command command) {
+    public NetCommand(Command command, Object object) {
         super(object);
         this.command = command;
     }
     
-    public NetCommand(NetEndpoint source, NetEndpoint destination, Object object, Command command) {
+    public NetCommand(Command command, Object object, NetEndpoint source, NetEndpoint destination) {
         super(source, destination, object);
         this.command = command;
     }
     
-    public NetCommand(long id, Object object, Command command) {
+    public NetCommand(long id, Command command, Object object) {
         super(id, object);
         this.command = command;
     }
     
-    public NetCommand(long id, NetEndpoint source, NetEndpoint destination, Object object, Command command) {
+    public NetCommand(long id, Command command, Object object, NetEndpoint source, NetEndpoint destination) {
         super(id, source, destination, object);
         this.command = command;
     }
