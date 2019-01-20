@@ -16,6 +16,9 @@
 
 package de.codemakers.net.wrapper.sockets.test2.server;
 
+import de.codemakers.net.entities.NetEndpoint;
+
+import java.net.InetAddress;
 import java.net.ServerSocket;
 
 public abstract class AbstractServerSocket {
@@ -43,6 +46,10 @@ public abstract class AbstractServerSocket {
     
     public ServerSocket getServerSocket() {
         return serverSocket;
+    }
+    
+    public NetEndpoint toNetEndpoint(InetAddress inetAddress) {
+        return new NetEndpoint(inetAddress, port);
     }
     
     public abstract AbstractServerSocket setServerSocket(ServerSocket serverSocket);

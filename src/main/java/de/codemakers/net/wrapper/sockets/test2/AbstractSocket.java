@@ -17,6 +17,7 @@
 package de.codemakers.net.wrapper.sockets.test2;
 
 import de.codemakers.base.util.tough.ToughFunction;
+import de.codemakers.net.entities.NetEndpoint;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -61,6 +62,10 @@ public abstract class AbstractSocket {
     
     public Socket getSocket() {
         return socket;
+    }
+    
+    public NetEndpoint toNetEndpoint() {
+        return new NetEndpoint(inetAddress, port);
     }
     
     public abstract AbstractSocket setSocket(Socket socket);
