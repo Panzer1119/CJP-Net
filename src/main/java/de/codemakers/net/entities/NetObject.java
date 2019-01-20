@@ -18,18 +18,37 @@ package de.codemakers.net.entities;
 
 import de.codemakers.base.util.interfaces.Snowflake;
 
+import java.io.Serializable;
 import java.util.Objects;
 
-public abstract class NetObject implements Snowflake {
+public abstract class NetObject implements Serializable, Snowflake {
     
     protected final long id;
+    protected final NetEndpoint source;
+    protected final NetEndpoint destination;
     
     public NetObject() {
         this.id = generateId();
+        this.source = null;
+        this.destination = null;
+    }
+    
+    public NetObject(NetEndpoint source, NetEndpoint destination) {
+        this.id = generateId();
+        this.source = source;
+        this.destination = destination;
     }
     
     public NetObject(long id) {
         this.id = id;
+        this.source = null;
+        this.destination = null;
+    }
+    
+    public NetObject(long id, NetEndpoint source, NetEndpoint destination) {
+        this.id = id;
+        this.source = source;
+        this.destination = destination;
     }
     
     @Override
@@ -37,26 +56,34 @@ public abstract class NetObject implements Snowflake {
         return id;
     }
     
+    public NetEndpoint getSource() {
+        return source;
+    }
+    
+    public NetEndpoint getDestination() {
+        return destination;
+    }
+    
     @Override
-    public boolean equals(Object object) {
-        if (this == object) {
+    public boolean equals(Object o) {
+        if (this == o) {
             return true;
         }
-        if (object == null || !getClass().isAssignableFrom(object.getClass())) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final NetObject netObject = (NetObject) object;
-        return id == netObject.id;
+        final NetObject netObject = (NetObject) o;
+        return id == netObject.id && Objects.equals(source, netObject.source) && Objects.equals(destination, netObject.destination);
     }
     
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Objects.hash(id, source, destination);
     }
     
     @Override
     public String toString() {
-        return "NetObject{" + "id=" + id + '}';
+        return "NetObject{" + "id=" + id + ", source=" + source + ", destination=" + destination + '}';
     }
     
 }
