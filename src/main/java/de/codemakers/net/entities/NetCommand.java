@@ -42,6 +42,10 @@ public class NetCommand extends NetObjectHolder<Object> {
         this.command = command;
     }
     
+    public Command getCommand() {
+        return command;
+    }
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) {
