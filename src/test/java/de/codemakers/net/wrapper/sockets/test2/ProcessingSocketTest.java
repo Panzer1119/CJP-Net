@@ -46,12 +46,12 @@ public class ProcessingSocketTest {
         final int port = 1234;
         final ProcessingSocket<ObjectInputStream, ObjectOutputStream, Object> processingSocket = new ProcessingSocket<ObjectInputStream, ObjectOutputStream, Object>(inetAddress, port) {
             @Override
-            ObjectOutputStream toInternOutputStream(OutputStream outputStream) throws Exception {
+            protected ObjectOutputStream toInternOutputStream(OutputStream outputStream) throws Exception {
                 return new ObjectOutputStream(outputStream);
             }
             
             @Override
-            ObjectInputStream toInternInputStream(InputStream inputStream) throws Exception {
+            protected ObjectInputStream toInternInputStream(InputStream inputStream) throws Exception {
                 return new ObjectInputStream(inputStream);
             }
             
