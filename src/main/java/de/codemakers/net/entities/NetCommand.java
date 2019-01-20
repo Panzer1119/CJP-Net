@@ -18,55 +18,53 @@ package de.codemakers.net.entities;
 
 import java.util.Objects;
 
-public class NetCommand extends NetObject {
+public class NetCommand extends NetObjectHolder<Object> {
     
     private final Command command;
-    private final Object object;
     
-    public NetCommand(Command command, Object object) {
-        super();
+    public NetCommand(Object object, Command command) {
+        super(object);
         this.command = command;
-        this.object = object;
     }
     
-    public NetCommand(long id, Command command, Object object) {
-        super(id);
+    public NetCommand(NetEndpoint source, NetEndpoint destination, Object object, Command command) {
+        super(source, destination, object);
         this.command = command;
-        this.object = object;
     }
     
-    public Command getCommand() {
-        return command;
+    public NetCommand(long id, Object object, Command command) {
+        super(id, object);
+        this.command = command;
     }
     
-    public <T> T getObject() {
-        return (T) object;
-    }
-    
-    public <T> T getObject(Class<T> clazz) {
-        return (T) object;
+    public NetCommand(long id, NetEndpoint source, NetEndpoint destination, Object object, Command command) {
+        super(id, source, destination, object);
+        this.command = command;
     }
     
     @Override
-    public boolean equals(Object object) {
-        if (this == object) {
+    public boolean equals(Object o) {
+        if (this == o) {
             return true;
         }
-        if (object == null || !getClass().isAssignableFrom(object.getClass())) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final NetCommand that = (NetCommand) object;
-        return command == that.command && Objects.equals(this.object, that.object);
+        if (!super.equals(o)) {
+            return false;
+        }
+        final NetCommand that = (NetCommand) o;
+        return command == that.command;
     }
     
     @Override
     public int hashCode() {
-        return Objects.hash(command, object);
+        return Objects.hash(super.hashCode(), command);
     }
     
     @Override
     public String toString() {
-        return "NetCommand{" + "command=" + command + ", object=" + object + ", id=" + id + '}';
+        return "NetCommand{" + "command=" + command + ", object=" + object + ", id=" + id + ", source=" + source + ", destination=" + destination + '}';
     }
     
     public enum Command {
@@ -77,7 +75,7 @@ public class NetCommand extends NetObject {
         CONNECT,
         DISCONNECT,
         CUSTOM,
-        UNKNOWN;
+        UNKNOWN
     }
     
 }
