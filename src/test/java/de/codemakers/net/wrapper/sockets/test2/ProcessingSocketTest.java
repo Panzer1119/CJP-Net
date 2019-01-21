@@ -39,12 +39,12 @@ public class ProcessingSocketTest {
     public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
     public static final AtomicLong PING = new AtomicLong(Long.MIN_VALUE);
     
-    public static ProcessingSocket<ObjectInputStream, ObjectOutputStream, Object> PROCESSING_SOCKET = null;
+    public static ProcessingSocket<ObjectInputStream, ObjectOutputStream> PROCESSING_SOCKET = null;
     
     public static void main(String[] args) throws Exception {
         final InetAddress inetAddress = InetAddress.getLocalHost();
         final int port = 1234;
-        final ProcessingSocket<ObjectInputStream, ObjectOutputStream, Object> processingSocket = new ProcessingSocket<ObjectInputStream, ObjectOutputStream, Object>(inetAddress, port) {
+        final ProcessingSocket<ObjectInputStream, ObjectOutputStream> processingSocket = new ProcessingSocket<ObjectInputStream, ObjectOutputStream>(inetAddress, port) {
             @Override
             protected ObjectOutputStream toInternOutputStream(OutputStream outputStream) throws Exception {
                 return new ObjectOutputStream(outputStream);
