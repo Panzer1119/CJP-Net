@@ -57,10 +57,17 @@ public class AdvancedSocket extends AbstractSocket implements Closeable, Connect
         return error;
     }
     
-    protected void error(Throwable error) {
+    protected AdvancedSocket error(Throwable error) {
         this.isErrored = true;
         this.error = error;
         this.localCloseRequested = false;
+        return this;
+    }
+    
+    public AdvancedSocket resetError() {
+        isErrored = false;
+        error = null;
+        return this;
     }
     
     protected boolean onConnection(boolean successful) throws Exception {
@@ -77,6 +84,7 @@ public class AdvancedSocket extends AbstractSocket implements Closeable, Connect
         setInetAddress(socket.getInetAddress());
         setPort(socket.getPort());
         this.socket = socket;
+        resetError();
         connected = socket.isConnected() && !socket.isClosed();
         final boolean successful = isConnected();
         try {
@@ -111,7 +119,7 @@ public class AdvancedSocket extends AbstractSocket implements Closeable, Connect
             socket = null;
         }
         socket = createSocket();
-        isErrored = false;
+        resetError();
         connected = socket != null && socket.isConnected() && !socket.isClosed();
         final boolean successful = isConnected();
         if (successful) {
