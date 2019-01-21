@@ -28,7 +28,7 @@ import java.util.Objects;
 public abstract class AdvancedServerSocket extends AbstractServerSocket implements Closeable, Startable, Stoppable {
     
     protected volatile boolean started = false;
-    protected volatile boolean localCloseRequested = false;
+    protected volatile boolean stopRequested = false;
     protected volatile boolean isErrored = false;
     protected volatile Throwable error = null;
     
@@ -44,8 +44,8 @@ public abstract class AdvancedServerSocket extends AbstractServerSocket implemen
         return started && !isErrored;
     }
     
-    public boolean isLocalCloseRequested() {
-        return localCloseRequested;
+    public boolean isStopRequested() {
+        return stopRequested;
     }
     
     public boolean isErrored() {
@@ -59,7 +59,7 @@ public abstract class AdvancedServerSocket extends AbstractServerSocket implemen
     public AdvancedServerSocket error(Throwable error) {
         this.isErrored = true;
         this.error = error;
-        this.localCloseRequested = false;
+        this.stopRequested = false;
         return this;
     }
     
@@ -99,7 +99,7 @@ public abstract class AdvancedServerSocket extends AbstractServerSocket implemen
             return false;
         }
         closeIntern();
-        localCloseRequested = false;
+        stopRequested = false;
         serverSocket = createServerSocket();
         resetError();
         started = serverSocket != null && serverSocket.isBound() && !serverSocket.isClosed();
@@ -111,7 +111,7 @@ public abstract class AdvancedServerSocket extends AbstractServerSocket implemen
         if (!isStarted()) {
             return false;
         }
-        localCloseRequested = true;
+        stopRequested = true;
         onStop();
         closeIntern();
         return true;
@@ -132,7 +132,7 @@ public abstract class AdvancedServerSocket extends AbstractServerSocket implemen
     
     @Override
     public String toString() {
-        return "AdvancedServerSocket{" + "started=" + started + ", localCloseRequested=" + localCloseRequested + ", isErrored=" + isErrored + ", error=" + error + ", port=" + port + ", serverSocket=" + serverSocket + '}';
+        return "AdvancedServerSocket{" + "started=" + started + ", stopRequested=" + stopRequested + ", isErrored=" + isErrored + ", error=" + error + ", port=" + port + ", serverSocket=" + serverSocket + '}';
     }
     
 }
