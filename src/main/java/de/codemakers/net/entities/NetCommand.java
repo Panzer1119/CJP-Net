@@ -28,7 +28,7 @@ public class NetCommand extends NetObjectHolder<Object> {
     }
     
     public NetCommand(Command command, Object object, NetEndpoint source, NetEndpoint destination) {
-        super(source, destination, object);
+        super(object, source, destination);
         this.command = command;
     }
     
@@ -38,7 +38,7 @@ public class NetCommand extends NetObjectHolder<Object> {
     }
     
     public NetCommand(long id, Command command, Object object, NetEndpoint source, NetEndpoint destination) {
-        super(id, source, destination, object);
+        super(id, object, source, destination);
         this.command = command;
     }
     
