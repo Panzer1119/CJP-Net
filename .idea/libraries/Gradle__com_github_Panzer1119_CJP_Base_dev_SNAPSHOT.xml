@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Gradle: com.github.Panzer1119:CJP-Base:dev-SNAPSHOT">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/Could not resolve com.github.Panzer1119:CJP-Base:dev-SNAPSHOT." />
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.github.Panzer1119/CJP-Base/dev-SNAPSHOT/70f0937fb39c21dd2eff8260d3b0e6f163e6c673/CJP-Base-dev-SNAPSHOT.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.github.Panzer1119/CJP-Base/dev-SNAPSHOT/b2ff39205fd87fc67492acb8bd0cca0f0ede0474/CJP-Base-dev-SNAPSHOT-sources.jar!/" />
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.github.Panzer1119/CJP-Base/dev-SNAPSHOT/b9d745d77a9e72011952f7b026fe07b4e1b22c7a/CJP-Base-dev-SNAPSHOT-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

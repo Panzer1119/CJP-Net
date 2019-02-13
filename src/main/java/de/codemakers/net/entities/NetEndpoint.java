@@ -14,50 +14,35 @@
  *     limitations under the License.
  */
 
-package de.codemakers.net.events;
+package de.codemakers.net.entities;
+
+import de.codemakers.base.entities.AbstractEndpoint;
 
 import java.net.InetAddress;
 import java.util.Objects;
 
-public class ConnectionEvent extends NetEvent {
+public class NetEndpoint extends AbstractEndpoint {
     
     protected final InetAddress inetAddress;
     protected final int port;
     
-    public ConnectionEvent(InetAddress inetAddress, int port) {
-        super();
+    public NetEndpoint(InetAddress inetAddress, int port) {
         this.inetAddress = inetAddress;
         this.port = port;
     }
     
-    public ConnectionEvent(long timestamp, InetAddress inetAddress, int port) {
-        super(timestamp);
+    public NetEndpoint(long id, InetAddress inetAddress, int port) {
+        super(id);
         this.inetAddress = inetAddress;
         this.port = port;
     }
     
-    public ConnectionEvent(long id, long timestamp, InetAddress inetAddress, int port) {
-        super(id, timestamp);
-        this.inetAddress = inetAddress;
-        this.port = port;
-    }
-    
-    public final InetAddress getInetAddress() {
+    public InetAddress getInetAddress() {
         return inetAddress;
     }
     
-    public final int getPort() {
+    public int getPort() {
         return port;
-    }
-    
-    @Override
-    public String toString() {
-        return getClass().getSimpleName() + "{" + "inetAddress=" + inetAddress + ", port=" + port + ", id=" + id + ", timestamp=" + timestamp + '}';
-    }
-    
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), inetAddress, port);
     }
     
     @Override
@@ -68,11 +53,21 @@ public class ConnectionEvent extends NetEvent {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        if (!super.equals(o)) {
+        if (id != 0 && !super.equals(o)) {
             return false;
         }
-        final ConnectionEvent that = (ConnectionEvent) o;
+        final NetEndpoint that = (NetEndpoint) o;
         return port == that.port && Objects.equals(inetAddress, that.inetAddress);
+    }
+    
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), inetAddress, port);
+    }
+    
+    @Override
+    public String toString() {
+        return "NetEndpoint{" + "inetAddress=" + inetAddress + ", port=" + port + ", id=" + id + '}';
     }
     
 }

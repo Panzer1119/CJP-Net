@@ -14,41 +14,39 @@
  *     limitations under the License.
  */
 
-package de.codemakers.net.events;
+package de.codemakers.net.entities;
 
 import java.util.Objects;
 
-public class ObjectReceived extends NetEvent {
+public class NetObjectHolder<T> extends NetObject {
     
-    private final Object object;
+    protected final T object;
     
-    public ObjectReceived(Object object) {
-        super();
+    public NetObjectHolder(T object) {
         this.object = object;
     }
     
-    public ObjectReceived(long timestamp, Object object) {
-        super(timestamp);
+    public NetObjectHolder(T object, NetEndpoint source, NetEndpoint destination) {
+        super(source, destination);
         this.object = object;
     }
     
-    public ObjectReceived(long id, long timestamp, Object object) {
-        super(id, timestamp);
+    public NetObjectHolder(long id, T object) {
+        super(id);
         this.object = object;
     }
     
-    public final Object getObject() {
+    public NetObjectHolder(long id, T object, NetEndpoint source, NetEndpoint destination) {
+        super(id, source, destination);
+        this.object = object;
+    }
+    
+    public T getObject() {
         return object;
     }
     
-    @Override
-    public String toString() {
-        return getClass().getSimpleName() + "{" + "object=" + object + ", id=" + id + ", timestamp=" + timestamp + '}';
-    }
-    
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), object);
+    public <D> D getObject(Class<D> clazz) {
+        return (D) object;
     }
     
     @Override
@@ -62,7 +60,18 @@ public class ObjectReceived extends NetEvent {
         if (!super.equals(o)) {
             return false;
         }
-        final ObjectReceived that = (ObjectReceived) o;
+        final NetObjectHolder<?> that = (NetObjectHolder<?>) o;
         return Objects.equals(object, that.object);
     }
+    
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), object);
+    }
+    
+    @Override
+    public String toString() {
+        return "NetObjectHolder{" + "object=" + object + ", id=" + id + ", source=" + source + ", destination=" + destination + '}';
+    }
+    
 }
