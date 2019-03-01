@@ -8,14 +8,16 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="Gradle: com.github.Panzer1119:CJP-Base:a1ff1d8dbd" level="project" />
+    <orderEntry type="library" name="Gradle: com.github.Panzer1119:CJP-Base:54adb2a561" level="project" />
     <orderEntry type="library" name="Gradle: org.reflections:reflections:0.9.11" level="project" />
     <orderEntry type="library" name="Gradle: com.google.guava:guava:20.0" level="project" />
     <orderEntry type="library" name="Gradle: com.google.code.gson:gson:2.8.5" level="project" />
     <orderEntry type="library" name="Gradle: commons-io:commons-io:2.6" level="project" />
+    <orderEntry type="library" name="Gradle: org.apache.commons:commons-text:1.6" level="project" />
     <orderEntry type="library" name="Gradle: net.openhft:zero-allocation-hashing:0.8" level="project" />
     <orderEntry type="library" name="Gradle: org.lz4:lz4-java:1.5.0" level="project" />
     <orderEntry type="library" name="Gradle: at.favre.lib:hkdf:1.0.2" level="project" />
+    <orderEntry type="library" name="Gradle: org.apache.commons:commons-lang3:3.8.1" level="project" />
     <orderEntry type="library" name="Gradle: org.javassist:javassist:3.21.0-GA" level="project" />
   </component>
 </module>
