@@ -33,7 +33,7 @@ public class InputStreamManager extends InputStream {
     public static final int DEFAULT_BUFFER_SIZE = 8192; //TODO Clean this up
     
     protected final InputStream inputStream;
-    protected final BiMap<Byte, EndableInputStream> endableInputStreams = Maps.synchronizedBiMap(HashBiMap.create());
+    protected final BiMap<Byte, EndableInputStream> inputStreams = Maps.synchronizedBiMap(HashBiMap.create());
     //protected final Map<Byte, int[]> buffers = new ConcurrentHashMap<>(); //TODO Clean this up
     protected final Map<Byte, Queue<Integer>> queues = new ConcurrentHashMap<>();
     
@@ -46,30 +46,30 @@ public class InputStreamManager extends InputStream {
     }
     
     public BiMap<Byte, EndableInputStream> getInputStreams() {
-        return endableInputStreams;
+        return inputStreams;
     }
     
-    public EndableInputStream getEndableInputStream(byte id) {
-        return endableInputStreams.get(id);
+    public EndableInputStream getInputStream(byte id) {
+        return inputStreams.get(id);
     }
     
-    public byte getId(EndableInputStream inputStream) {
-        return endableInputStreams.inverse().get(inputStream);
+    public byte getId(InputStream inputStream) {
+        return inputStreams.inverse().get(inputStream);
     }
     
     public byte getLowestId() {
-        return endableInputStreams.keySet().stream().sorted().findFirst().orElse(Byte.MAX_VALUE);
+        return inputStreams.keySet().stream().sorted().findFirst().orElse(Byte.MAX_VALUE);
     }
     
     public byte getHighestId() {
-        return endableInputStreams.keySet().stream().sorted().skip(endableInputStreams.size() - 1).findFirst().orElse(Byte.MIN_VALUE);
+        return inputStreams.keySet().stream().sorted().skip(inputStreams.size() - 1).findFirst().orElse(Byte.MIN_VALUE);
     }
     
     protected synchronized byte getNextId() {
         byte id = Byte.MIN_VALUE;
-        while (endableInputStreams.containsKey(id)) {
+        while (inputStreams.containsKey(id)) {
             if (id == Byte.MAX_VALUE) {
-                throw new ArrayIndexOutOfBoundsException("There is no id left for another " + InputStream.class.getSimpleName());
+                throw new ArrayIndexOutOfBoundsException("There is no id left for another " + EndableInputStream.class.getSimpleName());
             }
             id++;
         }
@@ -100,7 +100,7 @@ public class InputStreamManager extends InputStream {
     }
     
     protected synchronized int read(byte id) throws IOException {
-        if (!endableInputStreams.containsKey(id)) {
+        if (!inputStreams.containsKey(id)) {
             throw new StreamClosedException("There is no " + EndableInputStream.class.getSimpleName() + " with the id " + id);
         }
         final Queue<Integer> queue = queues.get(id);
@@ -125,11 +125,11 @@ public class InputStreamManager extends InputStream {
         return queue.remove();
     }
     
-    public synchronized EndableInputStream createEndableInputStream() {
-        return createEndableInputStream(getNextId());
+    public synchronized EndableInputStream createInputStream() {
+        return createInputStream(getNextId());
     }
     
-    public synchronized EndableInputStream createEndableInputStream(byte id) {
+    public synchronized EndableInputStream createInputStream(byte id) {
         final InputStream inputStream = new InputStream() {
             @Override
             public int read() throws IOException {
@@ -138,11 +138,11 @@ public class InputStreamManager extends InputStream {
             
             @Override
             public void close() throws IOException {
-                InputStreamManager.this.endableInputStreams.remove(id);
+                InputStreamManager.this.inputStreams.remove(id);
             }
         };
         final EndableInputStream endableInputStream = new EndableInputStream(inputStream);
-        endableInputStreams.put(id, endableInputStream);
+        inputStreams.put(id, endableInputStream);
         queues.put(id, new ConcurrentLinkedQueue<>());
         return endableInputStream;
     }

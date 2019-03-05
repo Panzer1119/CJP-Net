@@ -27,7 +27,7 @@ import java.io.OutputStream;
 public class OutputStreamManager extends OutputStream {
     
     protected final OutputStream outputStream;
-    protected final BiMap<Byte, EndableOutputStream> endableOutputStreams = Maps.synchronizedBiMap(HashBiMap.create());
+    protected final BiMap<Byte, EndableOutputStream> outputStreams = Maps.synchronizedBiMap(HashBiMap.create());
     
     public OutputStreamManager(OutputStream outputStream) {
         this.outputStream = outputStream;
@@ -37,31 +37,31 @@ public class OutputStreamManager extends OutputStream {
         return outputStream;
     }
     
-    public BiMap<Byte, EndableOutputStream> getEndableOutputStreams() {
-        return endableOutputStreams;
+    public BiMap<Byte, EndableOutputStream> getOutputStreams() {
+        return outputStreams;
     }
     
-    public EndableOutputStream getEndableOutputStream(byte id) {
-        return endableOutputStreams.get(id);
+    public EndableOutputStream getOutputStream(byte id) {
+        return outputStreams.get(id);
     }
     
-    public byte getId(EndableOutputStream outputStream) {
-        return endableOutputStreams.inverse().get(outputStream);
+    public byte getId(OutputStream outputStream) {
+        return outputStreams.inverse().get(outputStream);
     }
     
     public byte getLowestId() {
-        return endableOutputStreams.keySet().stream().sorted().findFirst().orElse(Byte.MAX_VALUE);
+        return outputStreams.keySet().stream().sorted().findFirst().orElse(Byte.MAX_VALUE);
     }
     
     public byte getHighestId() {
-        return endableOutputStreams.keySet().stream().sorted().skip(endableOutputStreams.size() - 1).findFirst().orElse(Byte.MIN_VALUE);
+        return outputStreams.keySet().stream().sorted().skip(outputStreams.size() - 1).findFirst().orElse(Byte.MIN_VALUE);
     }
     
     protected synchronized byte getNextId() {
         byte id = Byte.MIN_VALUE;
-        while (endableOutputStreams.containsKey(id)) {
+        while (outputStreams.containsKey(id)) {
             if (id == Byte.MAX_VALUE) {
-                throw new ArrayIndexOutOfBoundsException("There is no id left for another " + OutputStream.class.getSimpleName());
+                throw new ArrayIndexOutOfBoundsException("There is no id left for another " + EndableOutputStream.class.getSimpleName());
             }
             id++;
         }
@@ -84,19 +84,18 @@ public class OutputStreamManager extends OutputStream {
     }
     
     protected synchronized void write(byte id, int b) throws IOException {
-        if (!endableOutputStreams.containsKey(id)) {
+        if (!outputStreams.containsKey(id)) {
             throw new StreamClosedException("There is no " + EndableOutputStream.class.getSimpleName() + " with the id " + id);
         }
-        //endableOutputStreams.get(id).write(b);
         write(id & 0xFF);
         write(b);
     }
     
-    public synchronized EndableOutputStream createEndableOutputStream() {
-        return createEndableOutputStream(getNextId());
+    public synchronized EndableOutputStream createOutputStream() {
+        return createOutputStream(getNextId());
     }
     
-    public synchronized EndableOutputStream createEndableOutputStream(byte id) {
+    public synchronized EndableOutputStream createOutputStream(byte id) {
         final OutputStream outputStream = new OutputStream() {
             @Override
             public synchronized void write(int b) throws IOException {
@@ -110,11 +109,11 @@ public class OutputStreamManager extends OutputStream {
             
             @Override
             public synchronized void close() throws IOException {
-                OutputStreamManager.this.endableOutputStreams.remove(id);
+                OutputStreamManager.this.outputStreams.remove(id);
             }
         };
         final EndableOutputStream endableOutputStream = new EndableOutputStream(outputStream);
-        endableOutputStreams.put(id, endableOutputStream);
+        outputStreams.put(id, endableOutputStream);
         return endableOutputStream;
     }
     

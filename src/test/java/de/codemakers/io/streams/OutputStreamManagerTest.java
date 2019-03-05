@@ -35,9 +35,9 @@ public class OutputStreamManagerTest {
         Standard.async(() -> {
             final InputStreamManager inputStreamManager = new InputStreamManager(pipedInputStream);
             Logger.log("[RECEIVER] inputStreamManager=" + inputStreamManager);
-            final EndableInputStream endableInputStream_1 = inputStreamManager.createEndableInputStream();
+            final EndableInputStream endableInputStream_1 = inputStreamManager.createInputStream();
             Logger.log("[RECEIVER] endableInputStream_1=" + endableInputStream_1);
-            final EndableInputStream endableInputStream_2 = inputStreamManager.createEndableInputStream();
+            final EndableInputStream endableInputStream_2 = inputStreamManager.createInputStream();
             Logger.log("[RECEIVER] endableInputStream_2=" + endableInputStream_2);
             int b = 0;
             while ((b = endableInputStream_1.read()) >= 0) {
@@ -45,7 +45,7 @@ public class OutputStreamManagerTest {
             }
             Logger.log("[RECEIVER] 1 ENDED WITH " + ((byte) (b & 0xFF)));
             endableInputStream_1.close();
-            final EndableInputStream endableInputStream_3 = inputStreamManager.createEndableInputStream();
+            final EndableInputStream endableInputStream_3 = inputStreamManager.createInputStream();
             Logger.log("[RECEIVER] endableInputStream_3=" + endableInputStream_3);
             while ((b = endableInputStream_2.read()) >= 0) {
                 Logger.log("[RECEIVER] 2: " + ((byte) (b & 0xFF)));
@@ -57,7 +57,7 @@ public class OutputStreamManagerTest {
             Logger.log("[RECEIVER] 3 ENDED WITH " + ((byte) (b & 0xFF)));
             endableInputStream_2.close();
             endableInputStream_3.close();
-            final EndableInputStream endableInputStream_4 = inputStreamManager.createEndableInputStream((byte) (4 & 0xFF));
+            final EndableInputStream endableInputStream_4 = inputStreamManager.createInputStream((byte) (4 & 0xFF));
             Logger.log("[RECEIVER] endableInputStream_4=" + endableInputStream_4);
             final DataInputStream dataInputStream = new DataInputStream(endableInputStream_4);
             Logger.log("[RECEIVER] dataInputStream=" + dataInputStream);
@@ -69,16 +69,16 @@ public class OutputStreamManagerTest {
         });
         final OutputStreamManager outputStreamManager = new OutputStreamManager(pipedOutputStream);
         Logger.log("[SENDER] outputStreamManager=" + outputStreamManager);
-        final EndableOutputStream endableOutputStream_1 = outputStreamManager.createEndableOutputStream();
+        final EndableOutputStream endableOutputStream_1 = outputStreamManager.createOutputStream();
         Logger.log("[SENDER] endableOutputStream_1=" + endableOutputStream_1);
-        final EndableOutputStream endableOutputStream_2 = outputStreamManager.createEndableOutputStream();
+        final EndableOutputStream endableOutputStream_2 = outputStreamManager.createOutputStream();
         Logger.log("[SENDER] endableOutputStream_2=" + endableOutputStream_2);
         Logger.log("[SENDER] 1 " + Arrays.toString("Test 1".getBytes()));
         endableOutputStream_1.write("Test 1".getBytes());
         endableOutputStream_1.flush();
         Thread.sleep(500);
         endableOutputStream_1.close();
-        final EndableOutputStream endableOutputStream_3 = outputStreamManager.createEndableOutputStream();
+        final EndableOutputStream endableOutputStream_3 = outputStreamManager.createOutputStream();
         Logger.log("[SENDER] endableOutputStream_3=" + endableOutputStream_3);
         Logger.log("[SENDER] 3 " + Arrays.toString("Test 3".getBytes()));
         endableOutputStream_3.write("Test 3".getBytes());
@@ -91,7 +91,7 @@ public class OutputStreamManagerTest {
         endableOutputStream_3.close();
         endableOutputStream_2.close();
         Thread.sleep(1000);
-        final EndableOutputStream endableOutputStream_4 = outputStreamManager.createEndableOutputStream((byte) (4 & 0xFF));
+        final EndableOutputStream endableOutputStream_4 = outputStreamManager.createOutputStream((byte) (4 & 0xFF));
         Logger.log("[SENDER] endableOutputStream_4=" + endableOutputStream_4);
         final DataOutputStream dataOutputStream = new DataOutputStream(endableOutputStream_4);
         Logger.log("[SENDER] dataOutputStream=" + dataOutputStream);
