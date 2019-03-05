@@ -116,11 +116,12 @@ public class OutputStreamManagerTest {
         final PipedInputStream pipedInputStream = new PipedInputStream(pipedOutputStream);
         final byte STREAM_ONE = 1;
         final byte STREAM_TWO = 2;
+        final byte STREAM_THREE = 3;
         Standard.async(() -> {
             Thread.currentThread().setName("SENDER    ");
             final OutputStreamManager outputStreamManager = new OutputStreamManager(pipedOutputStream);
             Logger.log("outputStreamManager=" + outputStreamManager);
-            final ExecutorService executorService = Executors.newFixedThreadPool(2);
+            final ExecutorService executorService = Executors.newFixedThreadPool(3);
             executorService.submit(() -> Standard.silentError(() -> {
                 Thread.currentThread().setName("SENDER-" + STREAM_ONE + "  ");
                 final EndableOutputStream endableOutputStream = outputStreamManager.createOutputStream(STREAM_ONE);
@@ -153,6 +154,21 @@ public class OutputStreamManagerTest {
                 objectOutputStream.close();
                 //endableOutputStream.close();
             }));
+            executorService.submit(() -> Standard.silentError(() -> {
+                Thread.currentThread().setName("SENDER-" + STREAM_THREE + "  ");
+                final EndableOutputStream endableOutputStream = outputStreamManager.createOutputStream(STREAM_THREE);
+                Logger.log("endableOutputStream=" + endableOutputStream);
+                final ObjectOutputStream objectOutputStream = new ObjectOutputStream(endableOutputStream);
+                Logger.log("objectOutputStream=" + objectOutputStream);
+                for (int i = 0; i < 100; i++) {
+                    final double random = Math.random();
+                    Logger.log("sending " + i + " " + random);
+                    objectOutputStream.writeDouble(random);
+                    Thread.sleep(10);
+                }
+                objectOutputStream.close();
+                //endableOutputStream.close();
+            }));
             executorService.shutdown();
             executorService.awaitTermination(10, TimeUnit.MINUTES);
             outputStreamManager.close();
@@ -163,7 +179,7 @@ public class OutputStreamManagerTest {
             Thread.currentThread().setName("RECEIVER  ");
             final InputStreamManager inputStreamManager = new InputStreamManager(pipedInputStream);
             Logger.log("inputStreamManager=" + inputStreamManager);
-            final ExecutorService executorService = Executors.newFixedThreadPool(2);
+            final ExecutorService executorService = Executors.newFixedThreadPool(3);
             executorService.submit(() -> Standard.silentError(() -> {
                 Thread.currentThread().setName("RECEIVER-" + STREAM_ONE);
                 final EndableInputStream endableInputStream = inputStreamManager.createInputStream(STREAM_ONE);
@@ -191,6 +207,19 @@ public class OutputStreamManagerTest {
                 Logger.log("received 1 " + testObject_1);
                 final TestObject testObject_2 = (TestObject) objectInputStream.readObject();
                 Logger.log("received 2 " + testObject_2);
+                objectInputStream.close();
+                //endableInputStream.close();
+            }));
+            executorService.submit(() -> Standard.silentError(() -> {
+                Thread.currentThread().setName("RECEIVER-" + STREAM_THREE);
+                final EndableInputStream endableInputStream = inputStreamManager.createInputStream(STREAM_THREE);
+                Logger.log("endableInputStream=" + endableInputStream);
+                final ObjectInputStream objectInputStream = new ObjectInputStream(endableInputStream);
+                Logger.log("objectInputStream=" + objectInputStream);
+                for (int i = 0; i < 100; i++) {
+                    final double random = objectInputStream.readDouble();
+                    Logger.log("received " + i + " " + random);
+                }
                 objectInputStream.close();
                 //endableInputStream.close();
             }));
