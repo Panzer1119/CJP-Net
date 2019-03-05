@@ -28,12 +28,12 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class InputStreamManager {
+public class InputStreamManager extends InputStream {
     
     public static final int DEFAULT_BUFFER_SIZE = 8192; //TODO Clean this up
     
     protected final InputStream inputStream;
-    protected final BiMap<Byte, InputStream> inputStreams = Maps.synchronizedBiMap(HashBiMap.create());
+    protected final BiMap<Byte, EndableInputStream> endableInputStreams = Maps.synchronizedBiMap(HashBiMap.create());
     //protected final Map<Byte, int[]> buffers = new ConcurrentHashMap<>(); //TODO Clean this up
     protected final Map<Byte, Queue<Integer>> queues = new ConcurrentHashMap<>();
     
@@ -45,25 +45,29 @@ public class InputStreamManager {
         return inputStream;
     }
     
-    public BiMap<Byte, InputStream> getInputStreams() {
-        return inputStreams;
+    public BiMap<Byte, EndableInputStream> getInputStreams() {
+        return endableInputStreams;
     }
     
-    public byte getId(InputStream inputStream) {
-        return inputStreams.inverse().get(inputStream);
+    public EndableInputStream getEndableInputStream(byte id) {
+        return endableInputStreams.get(id);
+    }
+    
+    public byte getId(EndableInputStream inputStream) {
+        return endableInputStreams.inverse().get(inputStream);
     }
     
     public byte getLowestId() {
-        return inputStreams.keySet().stream().sorted().findFirst().orElse(Byte.MAX_VALUE);
+        return endableInputStreams.keySet().stream().sorted().findFirst().orElse(Byte.MAX_VALUE);
     }
     
     public byte getHighestId() {
-        return inputStreams.keySet().stream().sorted().skip(inputStreams.size() - 1).findFirst().orElse(Byte.MIN_VALUE);
+        return endableInputStreams.keySet().stream().sorted().skip(endableInputStreams.size() - 1).findFirst().orElse(Byte.MIN_VALUE);
     }
     
-    protected byte getNextId() {
+    protected synchronized byte getNextId() {
         byte id = Byte.MIN_VALUE;
-        while (inputStreams.containsKey(id)) {
+        while (endableInputStreams.containsKey(id)) {
             if (id == Byte.MAX_VALUE) {
                 throw new ArrayIndexOutOfBoundsException("There is no id left for another " + InputStream.class.getSimpleName());
             }
@@ -72,10 +76,20 @@ public class InputStreamManager {
         return id;
     }
     
-    protected byte readIntern() throws IOException {
-        final byte id = (byte) (inputStream.read() & 0xFF); //TODO Is this int to byte conversion working?
+    @Override
+    public synchronized int read() throws IOException {
+        return inputStream.read();
+    }
+    
+    @Override
+    public synchronized void close() throws IOException {
+        inputStream.close();
+    }
+    
+    protected synchronized byte readIntern() throws IOException {
+        final byte id = (byte) (read() & 0xFF); //TODO Is this int to byte conversion working?
         //final byte b = (byte) (inputStream.read() & 0xFF); //TODO Is this int to byte conversion working? //TODO Clean this up
-        final int b = inputStream.read();
+        final int b = read();
         final Queue<Integer> queue = queues.get(id);
         if (queue != null) {
             queue.add(b);
@@ -85,9 +99,9 @@ public class InputStreamManager {
         return id;
     }
     
-    protected int read(byte id) throws IOException {
-        if (!inputStreams.containsKey(id)) {
-            throw new StreamClosedException("There is no " + InputStream.class.getSimpleName() + " with the id " + id);
+    protected synchronized int read(byte id) throws IOException {
+        if (!endableInputStreams.containsKey(id)) {
+            throw new StreamClosedException("There is no " + EndableInputStream.class.getSimpleName() + " with the id " + id);
         }
         final Queue<Integer> queue = queues.get(id);
         while (queue.isEmpty()) {
@@ -111,8 +125,11 @@ public class InputStreamManager {
         return queue.remove();
     }
     
-    public InputStream createInputStream() {
-        final byte id = getNextId();
+    public synchronized EndableInputStream createEndableInputStream() {
+        return createEndableInputStream(getNextId());
+    }
+    
+    public synchronized EndableInputStream createEndableInputStream(byte id) {
         final InputStream inputStream = new InputStream() {
             @Override
             public int read() throws IOException {
@@ -121,12 +138,13 @@ public class InputStreamManager {
             
             @Override
             public void close() throws IOException {
-                InputStreamManager.this.inputStreams.remove(id);
+                InputStreamManager.this.endableInputStreams.remove(id);
             }
         };
-        inputStreams.put(id, inputStream);
+        final EndableInputStream endableInputStream = new EndableInputStream(inputStream);
+        endableInputStreams.put(id, endableInputStream);
         queues.put(id, new ConcurrentLinkedQueue<>());
-        return inputStream;
+        return endableInputStream;
     }
     
 }

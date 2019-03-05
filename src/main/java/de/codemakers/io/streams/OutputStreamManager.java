@@ -24,10 +24,10 @@ import de.codemakers.io.streams.exceptions.StreamClosedException;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class OutputStreamManager {
+public class OutputStreamManager extends OutputStream {
     
     protected final OutputStream outputStream;
-    protected final BiMap<Byte, OutputStream> outputStreams = Maps.synchronizedBiMap(HashBiMap.create());
+    protected final BiMap<Byte, EndableOutputStream> endableOutputStreams = Maps.synchronizedBiMap(HashBiMap.create());
     
     public OutputStreamManager(OutputStream outputStream) {
         this.outputStream = outputStream;
@@ -37,29 +37,29 @@ public class OutputStreamManager {
         return outputStream;
     }
     
-    public BiMap<Byte, OutputStream> getOutputStreams() {
-        return outputStreams;
+    public BiMap<Byte, EndableOutputStream> getEndableOutputStreams() {
+        return endableOutputStreams;
     }
     
-    public OutputStream getOutputStream(byte id) {
-        return outputStreams.get(id);
+    public EndableOutputStream getEndableOutputStream(byte id) {
+        return endableOutputStreams.get(id);
     }
     
-    public byte getId(OutputStream outputStream) {
-        return outputStreams.inverse().get(outputStream);
+    public byte getId(EndableOutputStream outputStream) {
+        return endableOutputStreams.inverse().get(outputStream);
     }
     
     public byte getLowestId() {
-        return outputStreams.keySet().stream().sorted().findFirst().orElse(Byte.MAX_VALUE);
+        return endableOutputStreams.keySet().stream().sorted().findFirst().orElse(Byte.MAX_VALUE);
     }
     
     public byte getHighestId() {
-        return outputStreams.keySet().stream().sorted().skip(outputStreams.size() - 1).findFirst().orElse(Byte.MIN_VALUE);
+        return endableOutputStreams.keySet().stream().sorted().skip(endableOutputStreams.size() - 1).findFirst().orElse(Byte.MIN_VALUE);
     }
     
     protected synchronized byte getNextId() {
         byte id = Byte.MIN_VALUE;
-        while (outputStreams.containsKey(id)) {
+        while (endableOutputStreams.containsKey(id)) {
             if (id == Byte.MAX_VALUE) {
                 throw new ArrayIndexOutOfBoundsException("There is no id left for another " + OutputStream.class.getSimpleName());
             }
@@ -68,34 +68,54 @@ public class OutputStreamManager {
         return id;
     }
     
-    protected synchronized void write(byte id, int b) throws IOException {
-        if (!outputStreams.containsKey(id)) {
-            throw new StreamClosedException("There is no " + OutputStream.class.getSimpleName() + " with the id " + id);
-        }
-        outputStreams.get(id).write(b);
+    @Override
+    public synchronized void write(int b) throws IOException {
+        outputStream.write(b);
     }
     
-    public synchronized OutputStream createOutputStream() {
-        final byte id = getNextId();
+    @Override
+    public synchronized void flush() throws IOException {
+        outputStream.flush();
+    }
+    
+    @Override
+    public synchronized void close() throws IOException {
+        outputStream.close();
+    }
+    
+    protected synchronized void write(byte id, int b) throws IOException {
+        if (!endableOutputStreams.containsKey(id)) {
+            throw new StreamClosedException("There is no " + EndableOutputStream.class.getSimpleName() + " with the id " + id);
+        }
+        //endableOutputStreams.get(id).write(b);
+        write(id & 0xFF);
+        write(b);
+    }
+    
+    public synchronized EndableOutputStream createEndableOutputStream() {
+        return createEndableOutputStream(getNextId());
+    }
+    
+    public synchronized EndableOutputStream createEndableOutputStream(byte id) {
         final OutputStream outputStream = new OutputStream() {
             @Override
             public synchronized void write(int b) throws IOException {
                 OutputStreamManager.this.write(id, b);
             }
-    
+            
             @Override
             public synchronized void flush() throws IOException {
-                OutputStreamManager.this.outputStream.flush();
+                OutputStreamManager.this.flush();
             }
-    
+            
             @Override
             public synchronized void close() throws IOException {
-                //TODO Hier das machen mit dem NULL_BYTE senden und das escapen und sowas, aber dafür ne extra klasse in CJP-Base machen!
-                OutputStreamManager.this.outputStreams.remove(id);
+                OutputStreamManager.this.endableOutputStreams.remove(id);
             }
         };
-        outputStreams.put(id, outputStream);
-        return outputStream;
+        final EndableOutputStream endableOutputStream = new EndableOutputStream(outputStream);
+        endableOutputStreams.put(id, endableOutputStream);
+        return endableOutputStream;
     }
     
 }
