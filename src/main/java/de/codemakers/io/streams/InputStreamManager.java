@@ -30,11 +30,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class InputStreamManager extends InputStream {
     
-    public static final int DEFAULT_BUFFER_SIZE = 8192; //TODO Clean this up
-    
     protected final InputStream inputStream;
     protected final BiMap<Byte, EndableInputStream> inputStreams = Maps.synchronizedBiMap(HashBiMap.create());
-    //protected final Map<Byte, int[]> buffers = new ConcurrentHashMap<>(); //TODO Clean this up
     protected final Map<Byte, Queue<Integer>> queues = new ConcurrentHashMap<>();
     
     public InputStreamManager(InputStream inputStream) {
@@ -87,14 +84,13 @@ public class InputStreamManager extends InputStream {
     }
     
     protected synchronized byte readIntern() throws IOException {
-        final byte id = (byte) (read() & 0xFF); //TODO Is this int to byte conversion working?
-        //final byte b = (byte) (inputStream.read() & 0xFF); //TODO Is this int to byte conversion working? //TODO Clean this up
+        final byte id = (byte) (read() & 0xFF);
         final int b = read();
         final Queue<Integer> queue = queues.get(id);
         if (queue != null) {
             queue.add(b);
         } else {
-            //TODO What if we got data for a no longer/never existing InputStream?
+            //TODO What if we got data for a no longer/never existing InputStream? //Create a new Queue?
         }
         return id;
     }
@@ -107,21 +103,6 @@ public class InputStreamManager extends InputStream {
         while (queue.isEmpty()) {
             readIntern();
         }
-        /* //TODO Clean this up
-        int[] buffer = null;
-        while ((buffer = buffers.get(id)) == null) {
-            //FIXME We need a new call to this call method, to fill the buffer??
-            try {
-                Thread.sleep(10);
-            } catch (Exception ex) {
-                //Logger.handleError(ex);
-            }
-        }
-        final int b = buffer[0];
-        System.arraycopy(buffer, 1, buffer, 0, buffer.length - 1);
-        buffer = Arrays.copyOf(buffer, buffer.length - 1);
-        buffers.put(id, buffer);
-        */
         return queue.remove();
     }
     
