@@ -138,11 +138,11 @@ public class OutputStreamManagerTest {
         final InputStream inputStream = pipedInputStream;
         */ //Pipes are broken, because they do not like too many threads
         final int port = 3254;
-        final ServerSocket serverSocket = new ServerSocket(port); //TODO Close this?
+        final ServerSocket serverSocket = new ServerSocket(port);
         Logger.log("serverSocket=" + serverSocket);
-        final Socket socket_1 = new Socket(InetAddress.getLocalHost(), port); //TODO Close this?
+        final Socket socket_1 = new Socket(InetAddress.getLocalHost(), port);
         Logger.log("socket_1=" + socket_1);
-        final Socket socket_2 = serverSocket.accept(); //TODO Close this?
+        final Socket socket_2 = serverSocket.accept();
         Logger.log("socket_2=" + socket_2);
         final OutputStream outputStream = socket_1.getOutputStream();
         final InputStream inputStream = socket_2.getInputStream();
