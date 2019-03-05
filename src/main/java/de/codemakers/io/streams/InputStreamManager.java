@@ -36,6 +36,7 @@ public class InputStreamManager extends InputStream {
     
     public InputStreamManager(InputStream inputStream) {
         this.inputStream = inputStream;
+        //this.inputStream = new BufferedInputStream(inputStream);
     }
     
     public InputStream getInputStream() {
@@ -86,12 +87,17 @@ public class InputStreamManager extends InputStream {
     protected synchronized byte readIntern() throws IOException {
         final byte id = (byte) (read() & 0xFF);
         final int b = read();
-        final Queue<Integer> queue = queues.get(id);
+        Queue<Integer> queue = queues.get(id);
         if (queue != null) {
             queue.add(b);
         } else {
             //TODO What if we got data for a no longer/never existing InputStream? //Create a new Queue?
+            queue = new ConcurrentLinkedQueue<>();
+            queues.put(id, queue);
+            queue.add(b);
+            //Logger.logDebug(String.format("Created new %s for \"%s\" and added \"%d\" to it", queue.getClass().getSimpleName(), id, b)); //FIXME Remove debug code
         }
+        //Logger.logDebug(String.format("ADDING   id=%s, queue.size()=%d", id, queue.size())); //FIXME Remove debug code
         return id;
     }
     
@@ -103,7 +109,16 @@ public class InputStreamManager extends InputStream {
         while (queue.isEmpty()) {
             readIntern();
         }
+        //Logger.logDebug(String.format("REMOVING id=%s, queue.size()=%d", id, queue.size())); //FIXME Remove debug code
         return queue.remove();
+    }
+    
+    protected synchronized int available(byte id) throws IOException {
+        final Queue<Integer> queue = queues.get(id);
+        if (queue == null) {
+            return -1;
+        }
+        return queue.size();
     }
     
     public synchronized EndableInputStream createInputStream() {
@@ -116,18 +131,23 @@ public class InputStreamManager extends InputStream {
         }
         final InputStream inputStream = new InputStream() {
             @Override
-            public int read() throws IOException {
+            public synchronized int read() throws IOException {
                 return InputStreamManager.this.read(id);
             }
             
             @Override
-            public void close() throws IOException {
+            public synchronized int available() throws IOException {
+                return InputStreamManager.this.available(id);
+            }
+            
+            @Override
+            public synchronized void close() throws IOException {
                 InputStreamManager.this.inputStreams.remove(id);
             }
         };
         final EndableInputStream endableInputStream = new EndableInputStream(inputStream);
         inputStreams.put(id, endableInputStream);
-        queues.put(id, new ConcurrentLinkedQueue<>());
+        queues.computeIfAbsent(id, (id_) -> new ConcurrentLinkedQueue<>());
         return endableInputStream;
     }
     
