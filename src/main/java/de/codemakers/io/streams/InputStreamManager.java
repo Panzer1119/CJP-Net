@@ -111,6 +111,9 @@ public class InputStreamManager extends InputStream {
     }
     
     public synchronized EndableInputStream createInputStream(byte id) {
+        if (inputStreams.containsKey(id)) {
+            return inputStreams.get(id);
+        }
         final InputStream inputStream = new InputStream() {
             @Override
             public int read() throws IOException {

@@ -96,6 +96,9 @@ public class OutputStreamManager extends OutputStream {
     }
     
     public synchronized EndableOutputStream createOutputStream(byte id) {
+        if (outputStreams.containsKey(id)) {
+            return outputStreams.get(id);
+        }
         final OutputStream outputStream = new OutputStream() {
             @Override
             public synchronized void write(int b) throws IOException {
