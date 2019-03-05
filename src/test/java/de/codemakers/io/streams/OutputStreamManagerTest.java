@@ -141,8 +141,17 @@ public class OutputStreamManagerTest {
                 Thread.currentThread().setName("SENDER-" + STREAM_TWO + "  ");
                 final EndableOutputStream endableOutputStream = outputStreamManager.createOutputStream(STREAM_TWO);
                 Logger.log("endableOutputStream=" + endableOutputStream);
-                
-                endableOutputStream.close();
+                final ObjectOutputStream objectOutputStream = new ObjectOutputStream(endableOutputStream);
+                Logger.log("objectOutputStream=" + objectOutputStream);
+                final TestObject testObject_1 = new TestObject("TestObject 1");
+                Logger.log("sending 1 " + testObject_1);
+                objectOutputStream.writeObject(testObject_1);
+                Thread.sleep(1000);
+                final TestObject testObject_2 = new TestObject("TestObject 2");
+                Logger.log("sending 2 " + testObject_2);
+                objectOutputStream.writeObject(testObject_2);
+                objectOutputStream.close();
+                //endableOutputStream.close();
             }));
             executorService.shutdown();
             executorService.awaitTermination(10, TimeUnit.MINUTES);
@@ -176,8 +185,14 @@ public class OutputStreamManagerTest {
                 Thread.currentThread().setName("RECEIVER-" + STREAM_TWO);
                 final EndableInputStream endableInputStream = inputStreamManager.createInputStream(STREAM_TWO);
                 Logger.log("endableInputStream=" + endableInputStream);
-                
-                endableInputStream.close();
+                final ObjectInputStream objectInputStream = new ObjectInputStream(endableInputStream);
+                Logger.log("objectInputStream=" + objectInputStream);
+                final TestObject testObject_1 = (TestObject) objectInputStream.readObject();
+                Logger.log("received 1 " + testObject_1);
+                final TestObject testObject_2 = (TestObject) objectInputStream.readObject();
+                Logger.log("received 2 " + testObject_2);
+                objectInputStream.close();
+                //endableInputStream.close();
             }));
             executorService.shutdown();
             executorService.awaitTermination(10, TimeUnit.MINUTES);
