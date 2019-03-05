@@ -118,6 +118,7 @@ public class OutputStreamManagerTest {
     public static final void test() throws Exception {
         Logger.getDefaultAdvancedLeveledLogger().createLogFormatBuilder().appendTimestamp().appendThread().appendText(": ").appendObject().finishWithoutException();
         Logger.setLogger(Logger.getDefaultAdvancedLogger());
+        final int times = 10;
         /*
         final PipedOutputStream pipedOutputStream = new PipedOutputStream() {
             @Override
@@ -148,156 +149,194 @@ public class OutputStreamManagerTest {
         final byte STREAM_ONE = 1;
         final byte STREAM_TWO = 2;
         final byte STREAM_THREE = 3;
-        Standard.async(() -> {
-            Thread.currentThread().setName("RECEIVER  ");
-            final InputStreamManager inputStreamManager = new InputStreamManager(inputStream);
-            Logger.log("inputStreamManager=" + inputStreamManager);
-            final ExecutorService executorService = Executors.newFixedThreadPool(3);
-            executorService.submit(() -> {
-                final Throwable throwable = Standard.silentError(() -> {
-                    Thread.currentThread().setName("RECEIVER-" + STREAM_ONE);
-                    final EndableInputStream endableInputStream = inputStreamManager.createInputStream(STREAM_ONE);
-                    Logger.log("endableInputStream=" + endableInputStream);
-                    final DataInputStream dataInputStream = new DataInputStream(endableInputStream);
-                    Logger.log("dataInputStream=" + dataInputStream);
-                /*
-                String temp = null;
-                while ((temp = dataInputStream.readUTF()) != null) {
-                    Logger.log("received \"" + temp + "\"");
-                }
-                */
-                    Logger.log("received 1 \"" + dataInputStream.readUTF() + "\"");
-                    Logger.log("received 2 \"" + dataInputStream.readUTF() + "\"");
-                    dataInputStream.close();
-                    //endableInputStream.close();
+        final ExecutorService executorService_1 = Executors.newFixedThreadPool(2);
+        Logger.log("executorService_1=" + executorService_1);
+        executorService_1.submit(() -> {
+            final Throwable throwable_1 = Standard.silentError(() -> {
+                Thread.currentThread().setName("RECEIVER  ");
+                final InputStreamManager inputStreamManager = new InputStreamManager(inputStream);
+                Logger.log("inputStreamManager=" + inputStreamManager);
+                final ExecutorService executorService_2 = Executors.newFixedThreadPool(3);
+                Logger.log("executorService_2=" + executorService_2);
+                executorService_2.submit(() -> {
+                    final Throwable throwable_2 = Standard.silentError(() -> {
+                        Thread.currentThread().setName("RECEIVER-" + STREAM_ONE);
+                        final EndableInputStream endableInputStream = inputStreamManager.createInputStream(STREAM_ONE);
+                        Logger.log("endableInputStream=" + endableInputStream);
+                        final DataInputStream dataInputStream = new DataInputStream(endableInputStream);
+                        Logger.log("dataInputStream=" + dataInputStream);
+                        /*
+                        String temp = null;
+                        while ((temp = dataInputStream.readUTF()) != null) {
+                            Logger.log("received \"" + temp + "\"");
+                        }
+                        */
+                        Logger.log("received 1 \"" + dataInputStream.readUTF() + "\"");
+                        Logger.log("received 2 \"" + dataInputStream.readUTF() + "\"");
+                        dataInputStream.close();
+                        //endableInputStream.close();
+                    });
+                    if (throwable_2 != null) {
+                        Logger.logError("STREAM_ONE", throwable_2);
+                    }
                 });
-                if (throwable != null) {
-                    Logger.logError("STREAM_ONE", throwable);
-                }
-            });
-            executorService.submit(() -> {
-                final Throwable throwable = Standard.silentError(() -> {
-                    Thread.currentThread().setName("RECEIVER-" + STREAM_TWO);
-                    final EndableInputStream endableInputStream = inputStreamManager.createInputStream(STREAM_TWO);
-                    Logger.log("endableInputStream=" + endableInputStream);
-                    final ObjectInputStream objectInputStream = new ObjectInputStream(endableInputStream);
-                    Logger.log("objectInputStream=" + objectInputStream);
-                    final TestObject testObject_1 = (TestObject) objectInputStream.readObject();
-                    Logger.log("received 1 " + testObject_1);
-                    final TestObject testObject_2 = (TestObject) objectInputStream.readObject();
-                    Logger.log("received 2 " + testObject_2);
-                    objectInputStream.close();
-                    //endableInputStream.close();
+                executorService_2.submit(() -> {
+                    final Throwable throwable_2 = Standard.silentError(() -> {
+                        Thread.currentThread().setName("RECEIVER-" + STREAM_TWO);
+                        final EndableInputStream endableInputStream = inputStreamManager.createInputStream(STREAM_TWO);
+                        Logger.log("endableInputStream=" + endableInputStream);
+                        final ObjectInputStream objectInputStream = new ObjectInputStream(endableInputStream);
+                        Logger.log("objectInputStream=" + objectInputStream);
+                        final TestObject testObject_1 = (TestObject) objectInputStream.readObject();
+                        Logger.log("received 1 " + testObject_1);
+                        final TestObject testObject_2 = (TestObject) objectInputStream.readObject();
+                        Logger.log("received 2 " + testObject_2);
+                        objectInputStream.close();
+                        //endableInputStream.close();
+                    });
+                    if (throwable_2 != null) {
+                        Logger.logError("STREAM_TWO", throwable_2);
+                    }
                 });
-                if (throwable != null) {
-                    Logger.logError("STREAM_TWO", throwable);
-                }
+                
+                executorService_2.submit(() -> {
+                    final Throwable throwable_2 = Standard.silentError(() -> {
+                        //Thread.sleep(1500);
+                        Thread.currentThread().setName("RECEIVER-" + STREAM_THREE);
+                        final EndableInputStream endableInputStream = inputStreamManager.createInputStream(STREAM_THREE);
+                        Logger.log("endableInputStream=" + endableInputStream);
+                        final ObjectInputStream objectInputStream = new ObjectInputStream(endableInputStream);
+                        Logger.log("objectInputStream=" + objectInputStream);
+                        for (int i = 0; i < times; i++) {
+                            final double random = objectInputStream.readDouble();
+                            Logger.log("received " + i + " " + random);
+                            //Logger.log("endableInputStream.available()=" + endableInputStream.available());
+                            //Logger.log("objectInputStream.available() =" + objectInputStream.available());
+                        }
+                        Logger.logError("WTF");
+                        objectInputStream.close();
+                        //endableInputStream.close();
+                    });
+                    if (throwable_2 != null) {
+                        Logger.logError("STREAM_THREE", throwable_2);
+                    }
+                });
+                
+                executorService_2.shutdown();
+                Logger.log("executorService_2=" + executorService_2);
+                executorService_2.awaitTermination(10, TimeUnit.MINUTES);
+                Logger.log("executorService_2=" + executorService_2);
+                Logger.log("closing " + inputStreamManager);
+                //Thread.sleep(1000);
+                inputStreamManager.close();
+                //inputStream.close();
             });
-            
-            executorService.submit(() -> Standard.silentError(() -> {
-                //Thread.sleep(1500);
-                Thread.currentThread().setName("RECEIVER-" + STREAM_THREE);
-                final EndableInputStream endableInputStream = inputStreamManager.createInputStream(STREAM_THREE);
-                Logger.log("endableInputStream=" + endableInputStream);
-                final ObjectInputStream objectInputStream = new ObjectInputStream(endableInputStream);
-                Logger.log("objectInputStream=" + objectInputStream);
-                for (int i = 0; i < 100; i++) {
-                    final double random = objectInputStream.readDouble();
-                    Logger.log("received " + i + " " + random);
-                    //Logger.log("endableInputStream.available()=" + endableInputStream.available());
-                    //Logger.log("objectInputStream.available() =" + objectInputStream.available());
-                }
-                Logger.logError("WTF");
-                objectInputStream.close();
-                //endableInputStream.close();
-            }));
-            
-            executorService.shutdown();
-            executorService.awaitTermination(10, TimeUnit.MINUTES);
-            Logger.log("closing " + inputStreamManager);
-            //Thread.sleep(1000);
-            inputStreamManager.close();
-            //inputStream.close();
+            if (throwable_1 != null) {
+                Logger.logError("RECEIVER", throwable_1);
+            }
         });
         //Thread.sleep(500);
-        Standard.async(() -> {
-            Thread.currentThread().setName("SENDER    ");
-            final OutputStreamManager outputStreamManager = new OutputStreamManager(outputStream);
-            Logger.log("outputStreamManager=" + outputStreamManager);
-            final ExecutorService executorService = Executors.newFixedThreadPool(3);
-            executorService.submit(() -> {
-                final Throwable throwable = Standard.silentError(() -> {
-                    Thread.currentThread().setName("SENDER-" + STREAM_ONE + "  ");
-                    final EndableOutputStream endableOutputStream = outputStreamManager.createOutputStream(STREAM_ONE);
-                    Logger.log("endableOutputStream=" + endableOutputStream);
-                    final DataOutputStream dataOutputStream = new DataOutputStream(endableOutputStream);
-                    Logger.log("endableOutputStream=" + dataOutputStream);
-                    final String text_1 = "Test String 1 von " + Thread.currentThread().getName();
-                    Logger.log("sending 1 \"" + text_1 + "\"");
-                    dataOutputStream.writeUTF(text_1);
-                    dataOutputStream.flush();
-                    Thread.sleep(1000);
-                    final String text_2 = "Test String 2 von " + Thread.currentThread().getName();
-                    Logger.log("sending 2 \"" + text_2 + "\"");
-                    dataOutputStream.writeUTF(text_2);
-                    dataOutputStream.flush();
-                    dataOutputStream.close();
-                    //endableOutputStream.close();
+        executorService_1.submit(() -> {
+            final Throwable throwable_1 = Standard.silentError(() -> {
+                Thread.currentThread().setName("SENDER    ");
+                final OutputStreamManager outputStreamManager = new OutputStreamManager(outputStream);
+                Logger.log("outputStreamManager=" + outputStreamManager);
+                final ExecutorService executorService_2 = Executors.newFixedThreadPool(3);
+                Logger.log("executorService_2=" + executorService_2);
+                executorService_2.submit(() -> {
+                    final Throwable throwable_2 = Standard.silentError(() -> {
+                        Thread.currentThread().setName("SENDER-" + STREAM_ONE + "  ");
+                        final EndableOutputStream endableOutputStream = outputStreamManager.createOutputStream(STREAM_ONE);
+                        Logger.log("endableOutputStream=" + endableOutputStream);
+                        final DataOutputStream dataOutputStream = new DataOutputStream(endableOutputStream);
+                        Logger.log("endableOutputStream=" + dataOutputStream);
+                        final String text_1 = "Test String 1 von " + Thread.currentThread().getName();
+                        Logger.log("sending 1 \"" + text_1 + "\"");
+                        dataOutputStream.writeUTF(text_1);
+                        dataOutputStream.flush();
+                        Thread.sleep(1000);
+                        final String text_2 = "Test String 2 von " + Thread.currentThread().getName();
+                        Logger.log("sending 2 \"" + text_2 + "\"");
+                        dataOutputStream.writeUTF(text_2);
+                        dataOutputStream.flush();
+                        dataOutputStream.close();
+                        //endableOutputStream.close();
+                    });
+                    if (throwable_2 != null) {
+                        Logger.logError("STREAM_ONE", throwable_2);
+                    }
                 });
-                if (throwable != null) {
-                    Logger.logError("STREAM_ONE", throwable);
-                }
-            });
-            executorService.submit(() -> {
-                final Throwable throwable = Standard.silentError(() -> {
-                    Thread.currentThread().setName("SENDER-" + STREAM_TWO + "  ");
-                    final EndableOutputStream endableOutputStream = outputStreamManager.createOutputStream(STREAM_TWO);
-                    Logger.log("endableOutputStream=" + endableOutputStream);
-                    final ObjectOutputStream objectOutputStream = new ObjectOutputStream(endableOutputStream);
-                    Logger.log("objectOutputStream=" + objectOutputStream);
-                    final TestObject testObject_1 = new TestObject("TestObject 1");
-                    Logger.log("sending 1 " + testObject_1);
-                    objectOutputStream.writeObject(testObject_1);
-                    objectOutputStream.flush();
-                    Thread.sleep(1000);
-                    final TestObject testObject_2 = new TestObject("TestObject 2");
-                    Logger.log("sending 2 " + testObject_2);
-                    objectOutputStream.writeObject(testObject_2);
-                    objectOutputStream.flush();
-                    objectOutputStream.close();
-                    //endableOutputStream.close();
+                executorService_2.submit(() -> {
+                    final Throwable throwable_2 = Standard.silentError(() -> {
+                        Thread.currentThread().setName("SENDER-" + STREAM_TWO + "  ");
+                        final EndableOutputStream endableOutputStream = outputStreamManager.createOutputStream(STREAM_TWO);
+                        Logger.log("endableOutputStream=" + endableOutputStream);
+                        final ObjectOutputStream objectOutputStream = new ObjectOutputStream(endableOutputStream);
+                        Logger.log("objectOutputStream=" + objectOutputStream);
+                        final TestObject testObject_1 = new TestObject("TestObject 1");
+                        Logger.log("sending 1 " + testObject_1);
+                        objectOutputStream.writeObject(testObject_1);
+                        objectOutputStream.flush();
+                        Thread.sleep(1000);
+                        final TestObject testObject_2 = new TestObject("TestObject 2");
+                        Logger.log("sending 2 " + testObject_2);
+                        objectOutputStream.writeObject(testObject_2);
+                        objectOutputStream.flush();
+                        objectOutputStream.close();
+                        //endableOutputStream.close();
+                    });
+                    if (throwable_2 != null) {
+                        Logger.logError("STREAM_TWO", throwable_2);
+                    }
                 });
-                if (throwable != null) {
-                    Logger.logError("STREAM_TWO", throwable);
-                }
+                
+                executorService_2.submit(() -> {
+                    final Throwable throwable_2 = Standard.silentError(() -> {
+                        Thread.currentThread().setName("SENDER-" + STREAM_THREE + "  ");
+                        final EndableOutputStream endableOutputStream = outputStreamManager.createOutputStream(STREAM_THREE);
+                        Logger.log("endableOutputStream=" + endableOutputStream);
+                        final ObjectOutputStream objectOutputStream = new ObjectOutputStream(endableOutputStream);
+                        Logger.log("objectOutputStream=" + objectOutputStream);
+                        for (int i = 0; i < times; i++) {
+                            final double random = Math.random();
+                            Logger.log("sending " + i + " " + random);
+                            objectOutputStream.writeDouble(random);
+                            //objectOutputStream.flush();
+                            Thread.sleep(1000 / times);
+                        }
+                        objectOutputStream.flush();
+                        objectOutputStream.close();
+                        //endableOutputStream.close();
+                    });
+                    if (throwable_2 != null) {
+                        Logger.logError("STREAM_THREE", throwable_2);
+                    }
+                });
+                
+                executorService_2.shutdown();
+                Logger.log("executorService_2=" + executorService_2);
+                executorService_2.awaitTermination(10, TimeUnit.MINUTES);
+                Logger.log("executorService_2=" + executorService_2);
+                Logger.log("closing " + outputStreamManager);
+                //Thread.sleep(1000);
+                outputStreamManager.close();
+                //outputStream.flush();
+                //outputStream.close();
             });
-            
-            executorService.submit(() -> Standard.silentError(() -> {
-                Thread.currentThread().setName("SENDER-" + STREAM_THREE + "  ");
-                final EndableOutputStream endableOutputStream = outputStreamManager.createOutputStream(STREAM_THREE);
-                Logger.log("endableOutputStream=" + endableOutputStream);
-                final ObjectOutputStream objectOutputStream = new ObjectOutputStream(endableOutputStream);
-                Logger.log("objectOutputStream=" + objectOutputStream);
-                for (int i = 0; i < 100; i++) {
-                    final double random = Math.random();
-                    Logger.log("sending " + i + " " + random);
-                    objectOutputStream.writeDouble(random);
-                    //objectOutputStream.flush();
-                    Thread.sleep(10);
-                }
-                objectOutputStream.flush();
-                objectOutputStream.close();
-                //endableOutputStream.close();
-            }));
-            
-            executorService.shutdown();
-            executorService.awaitTermination(10, TimeUnit.MINUTES);
-            Logger.log("closing " + outputStreamManager);
-            //Thread.sleep(1000);
-            outputStreamManager.close();
-            //outputStream.flush();
-            //outputStream.close();
+            if (throwable_1 != null) {
+                Logger.logError("SENDER  ", throwable_1);
+            }
         });
+        executorService_1.shutdown();
+        Logger.log("executorService_1=" + executorService_1);
+        executorService_1.awaitTermination(10, TimeUnit.MINUTES);
+        Logger.log("executorService_1=" + executorService_1);
+        Logger.log("closing " + socket_1);
+        socket_1.close();
+        Logger.log("closing " + socket_2);
+        socket_2.close();
+        Logger.log("closing " + serverSocket);
+        serverSocket.close();
     }
     
     public static class TestObject implements Serializable {
