@@ -36,6 +36,6 @@ dependencies {
     //implementation 'com.github.Panzer1119:CJP-Base:v1.8.0_172-alpha.43'
     //implementation 'com.github.Panzer1119:CJP-Base:dev-SNAPSHOT' //20.01.2019 22:45
     //implementation 'com.github.Panzer1119:CJP-Base:43b8e0c0e6' //28.01.2019 21:47
-    implementation 'com.github.Panzer1119:CJP-Base:6c09378fd3' //01.03.2019 15:08
+    implementation 'com.github.Panzer1119:CJP-Base:506425a68a' //05.03.2019 14:14
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
