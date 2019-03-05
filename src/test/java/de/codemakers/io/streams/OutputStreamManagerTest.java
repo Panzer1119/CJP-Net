@@ -19,10 +19,7 @@ package de.codemakers.io.streams;
 import de.codemakers.base.Standard;
 import de.codemakers.base.logger.Logger;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
+import java.io.*;
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -144,7 +141,7 @@ public class OutputStreamManagerTest {
                 Thread.currentThread().setName("SENDER-" + STREAM_TWO + "  ");
                 final EndableOutputStream endableOutputStream = outputStreamManager.createOutputStream(STREAM_TWO);
                 Logger.log("endableOutputStream=" + endableOutputStream);
-        
+                
                 endableOutputStream.close();
             }));
             executorService.shutdown();
@@ -179,7 +176,7 @@ public class OutputStreamManagerTest {
                 Thread.currentThread().setName("RECEIVER-" + STREAM_TWO);
                 final EndableInputStream endableInputStream = inputStreamManager.createInputStream(STREAM_TWO);
                 Logger.log("endableInputStream=" + endableInputStream);
-    
+                
                 endableInputStream.close();
             }));
             executorService.shutdown();
@@ -187,6 +184,30 @@ public class OutputStreamManagerTest {
             inputStreamManager.close();
             //pipedInputStream.close();
         });
+    }
+    
+    public static class TestObject implements Serializable {
+        
+        protected String name;
+        private final double random = Math.random();
+    
+        public TestObject(String name) {
+            this.name = name;
+        }
+    
+        public String getName() {
+            return name;
+        }
+    
+        public double getRandom() {
+            return random;
+        }
+    
+        @Override
+        public String toString() {
+            return "TestObject{" + "name='" + name + '\'' + ", random=" + random + '}';
+        }
+        
     }
     
 }
