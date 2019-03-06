@@ -118,6 +118,26 @@ public class OutputStreamManagerTest {
     public static final void test() throws Exception {
         Logger.getDefaultAdvancedLeveledLogger().createLogFormatBuilder().appendTimestamp().appendThread().appendText(": ").appendObject().finishWithoutException();
         Logger.setLogger(Logger.getDefaultAdvancedLogger());
+        /*
+        Logger.setLogger(new AdvancedLogger() {
+            @Override
+            protected void logFinal(Object object) {
+                Standard.SYSTEM_OUTPUT_STREAM.println(object);
+                Standard.SYSTEM_OUTPUT_STREAM.flush();
+            }
+    
+            @Override
+            protected void logErrorFinal(Object object, Throwable throwable) {
+                if (object != null) {
+                    Standard.SYSTEM_ERROR_STREAM.println(object);
+                }
+                if (throwable != null) {
+                    throwable.printStackTrace(Standard.SYSTEM_ERROR_STREAM);
+                }
+                Standard.SYSTEM_ERROR_STREAM.flush();
+            }
+        });
+        */
         final int times = 10;
         /*
         final PipedOutputStream pipedOutputStream = new PipedOutputStream() {
