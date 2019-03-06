@@ -38,15 +38,15 @@ public class SmallDataPacket implements Serializable {
         this.bytes = bytes;
     }
     
-    public SmallDataPacket(int id, byte[] data, Hasher hasher) {
+    public SmallDataPacket(short id, byte[] data, Hasher hasher) {
         this(id, data, hasher == null ? null : hasher.hashWithoutException(data));
     }
     
-    public SmallDataPacket(int id, byte[] data, byte[] hash) {
+    public SmallDataPacket(short id, byte[] data, byte[] hash) {
         this(id, data == null ? -1 : data.length, data, hash == null ? -1 : hash.length, hash);
     }
     
-    public SmallDataPacket(int id, int length, byte[] data, int hash_length, byte[] hash) {
+    public SmallDataPacket(short id, int length, byte[] data, int hash_length, byte[] hash) {
         if (length > MAX_DATA_BYTES || (data != null && data.length > MAX_DATA_BYTES)) {
             throw new IllegalArgumentException("length is too big");
         }
@@ -54,7 +54,7 @@ public class SmallDataPacket implements Serializable {
             throw new IllegalArgumentException("hash_length is too big");
         }
         bytes = new byte[ID_BYTES + LENGTH_BYTES + Math.max(0, length) + LENGTH_BYTES + Math.max(0, hash_length)];
-        System.arraycopy(ConvertUtil.shortToByteArray((short) id), 0, bytes, 0, ID_BYTES);
+        System.arraycopy(ConvertUtil.shortToByteArray(id), 0, bytes, 0, ID_BYTES);
         bytes[ID_BYTES] = (byte) (length - 1);
         if (data != null) {
             System.arraycopy(data, 0, bytes, ID_BYTES + LENGTH_BYTES, length);

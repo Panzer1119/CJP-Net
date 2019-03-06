@@ -31,7 +31,7 @@ public class SmallDataPacketTest {
         final byte[] hash = HashUtil.HASHER_32_XXHASH_32_FASTEST.hashWithoutException(data_1);
         System.out.println("hash=" + Arrays.toString(hash));
         System.out.println("hash.length=" + hash.length);
-        final SmallDataPacket smallDataPacket = new SmallDataPacket(5, data_1, hash);
+        final SmallDataPacket smallDataPacket = new SmallDataPacket((short) 5, data_1, hash);
         //final SmallDataPacket smallDataPacket = new SmallDataPacket(Long.MIN_VALUE, data, (byte[]) null);
         System.out.println("smallDataPacket=" + smallDataPacket);
         System.out.println("smallDataPacket.getLength()    =" + smallDataPacket.getLength());
