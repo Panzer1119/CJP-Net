@@ -42,11 +42,11 @@ public class OutputStreamManagerTest {
         final PipedOutputStream pipedOutputStream = new PipedOutputStream();
         final PipedInputStream pipedInputStream = new PipedInputStream(pipedOutputStream);
         Standard.async(() -> {
-            final InputStreamManager inputStreamManager = new InputStreamManager(pipedInputStream);
-            Logger.log("[RECEIVER] inputStreamManager=" + inputStreamManager);
-            final EndableInputStream endableInputStream_1 = inputStreamManager.createInputStream();
+            final TunnelInputStream tunnelInputStream = new TunnelInputStream(pipedInputStream);
+            Logger.log("[RECEIVER] tunnelInputStream=" + tunnelInputStream);
+            final EndableInputStream endableInputStream_1 = tunnelInputStream.createInputStream();
             Logger.log("[RECEIVER] endableInputStream_1=" + endableInputStream_1);
-            final EndableInputStream endableInputStream_2 = inputStreamManager.createInputStream();
+            final EndableInputStream endableInputStream_2 = tunnelInputStream.createInputStream();
             Logger.log("[RECEIVER] endableInputStream_2=" + endableInputStream_2);
             int b = 0;
             while ((b = endableInputStream_1.read()) >= 0) {
@@ -54,7 +54,7 @@ public class OutputStreamManagerTest {
             }
             Logger.log("[RECEIVER] 1 ENDED WITH " + ((byte) (b & 0xFF)));
             endableInputStream_1.close();
-            final EndableInputStream endableInputStream_3 = inputStreamManager.createInputStream();
+            final EndableInputStream endableInputStream_3 = tunnelInputStream.createInputStream();
             Logger.log("[RECEIVER] endableInputStream_3=" + endableInputStream_3);
             while ((b = endableInputStream_2.read()) >= 0) {
                 Logger.log("[RECEIVER] 2: " + ((byte) (b & 0xFF)));
@@ -66,7 +66,7 @@ public class OutputStreamManagerTest {
             Logger.log("[RECEIVER] 3 ENDED WITH " + ((byte) (b & 0xFF)));
             endableInputStream_2.close();
             endableInputStream_3.close();
-            final EndableInputStream endableInputStream_4 = inputStreamManager.createInputStream((byte) (4 & 0xFF));
+            final EndableInputStream endableInputStream_4 = tunnelInputStream.createInputStream((byte) (4 & 0xFF));
             Logger.log("[RECEIVER] endableInputStream_4=" + endableInputStream_4);
             final DataInputStream dataInputStream = new DataInputStream(endableInputStream_4);
             Logger.log("[RECEIVER] dataInputStream=" + dataInputStream);
@@ -74,20 +74,20 @@ public class OutputStreamManagerTest {
             Logger.log("[RECEIVER] 4 UTF \"" + dataInputStream.readUTF() + "\"");
             dataInputStream.close();
             //endableInputStream_4.close();
-            inputStreamManager.close();
+            tunnelInputStream.close();
         });
-        final OutputStreamManager outputStreamManager = new OutputStreamManager(pipedOutputStream);
-        Logger.log("[SENDER] outputStreamManager=" + outputStreamManager);
-        final EndableOutputStream endableOutputStream_1 = outputStreamManager.createOutputStream();
+        final TunnelOutputStream tunnelOutputStream = new TunnelOutputStream(pipedOutputStream);
+        Logger.log("[SENDER] tunnelOutputStream=" + tunnelOutputStream);
+        final EndableOutputStream endableOutputStream_1 = tunnelOutputStream.createOutputStream();
         Logger.log("[SENDER] endableOutputStream_1=" + endableOutputStream_1);
-        final EndableOutputStream endableOutputStream_2 = outputStreamManager.createOutputStream();
+        final EndableOutputStream endableOutputStream_2 = tunnelOutputStream.createOutputStream();
         Logger.log("[SENDER] endableOutputStream_2=" + endableOutputStream_2);
         Logger.log("[SENDER] 1 " + Arrays.toString("Test 1".getBytes()));
         endableOutputStream_1.write("Test 1".getBytes());
         endableOutputStream_1.flush();
         Thread.sleep(500);
         endableOutputStream_1.close();
-        final EndableOutputStream endableOutputStream_3 = outputStreamManager.createOutputStream();
+        final EndableOutputStream endableOutputStream_3 = tunnelOutputStream.createOutputStream();
         Logger.log("[SENDER] endableOutputStream_3=" + endableOutputStream_3);
         Logger.log("[SENDER] 3 " + Arrays.toString("Test 3".getBytes()));
         endableOutputStream_3.write("Test 3".getBytes());
@@ -100,7 +100,7 @@ public class OutputStreamManagerTest {
         endableOutputStream_3.close();
         endableOutputStream_2.close();
         Thread.sleep(1000);
-        final EndableOutputStream endableOutputStream_4 = outputStreamManager.createOutputStream((byte) (4 & 0xFF));
+        final EndableOutputStream endableOutputStream_4 = tunnelOutputStream.createOutputStream((byte) (4 & 0xFF));
         Logger.log("[SENDER] endableOutputStream_4=" + endableOutputStream_4);
         final DataOutputStream dataOutputStream = new DataOutputStream(endableOutputStream_4);
         Logger.log("[SENDER] dataOutputStream=" + dataOutputStream);
@@ -111,8 +111,8 @@ public class OutputStreamManagerTest {
         dataOutputStream.flush();
         dataOutputStream.close();
         //endableOutputStream_4.close();
-        outputStreamManager.flush();
-        outputStreamManager.close();
+        tunnelOutputStream.flush();
+        tunnelOutputStream.close();
     }
     
     public static final void test() throws Exception {
@@ -154,14 +154,14 @@ public class OutputStreamManagerTest {
         executorService_1.submit(() -> {
             final Throwable throwable_1 = Standard.silentError(() -> {
                 Thread.currentThread().setName("RECEIVER  ");
-                final InputStreamManager inputStreamManager = new InputStreamManager(inputStream);
-                Logger.log("inputStreamManager=" + inputStreamManager);
+                final TunnelInputStream tunnelInputStream = new TunnelInputStream(inputStream);
+                Logger.log("tunnelInputStream=" + tunnelInputStream);
                 final ExecutorService executorService_2 = Executors.newFixedThreadPool(3);
                 Logger.log("executorService_2=" + executorService_2);
                 executorService_2.submit(() -> {
                     final Throwable throwable_2 = Standard.silentError(() -> {
                         Thread.currentThread().setName("RECEIVER-" + STREAM_ONE);
-                        final EndableInputStream endableInputStream = inputStreamManager.createInputStream(STREAM_ONE);
+                        final EndableInputStream endableInputStream = tunnelInputStream.createInputStream(STREAM_ONE);
                         Logger.log("endableInputStream=" + endableInputStream);
                         final DataInputStream dataInputStream = new DataInputStream(endableInputStream);
                         Logger.log("dataInputStream=" + dataInputStream);
@@ -183,7 +183,7 @@ public class OutputStreamManagerTest {
                 executorService_2.submit(() -> {
                     final Throwable throwable_2 = Standard.silentError(() -> {
                         Thread.currentThread().setName("RECEIVER-" + STREAM_TWO);
-                        final EndableInputStream endableInputStream = inputStreamManager.createInputStream(STREAM_TWO);
+                        final EndableInputStream endableInputStream = tunnelInputStream.createInputStream(STREAM_TWO);
                         Logger.log("endableInputStream=" + endableInputStream);
                         final ObjectInputStream objectInputStream = new ObjectInputStream(endableInputStream);
                         Logger.log("objectInputStream=" + objectInputStream);
@@ -203,7 +203,7 @@ public class OutputStreamManagerTest {
                     final Throwable throwable_2 = Standard.silentError(() -> {
                         //Thread.sleep(1500);
                         Thread.currentThread().setName("RECEIVER-" + STREAM_THREE);
-                        final EndableInputStream endableInputStream = inputStreamManager.createInputStream(STREAM_THREE);
+                        final EndableInputStream endableInputStream = tunnelInputStream.createInputStream(STREAM_THREE);
                         Logger.log("endableInputStream=" + endableInputStream);
                         final ObjectInputStream objectInputStream = new ObjectInputStream(endableInputStream);
                         Logger.log("objectInputStream=" + objectInputStream);
@@ -226,9 +226,9 @@ public class OutputStreamManagerTest {
                 Logger.log("executorService_2=" + executorService_2);
                 executorService_2.awaitTermination(10, TimeUnit.MINUTES);
                 Logger.log("executorService_2=" + executorService_2);
-                Logger.log("closing " + inputStreamManager);
+                Logger.log("closing " + tunnelInputStream);
                 //Thread.sleep(1000);
-                inputStreamManager.close();
+                tunnelInputStream.close();
                 //inputStream.close();
             });
             if (throwable_1 != null) {
@@ -239,14 +239,14 @@ public class OutputStreamManagerTest {
         executorService_1.submit(() -> {
             final Throwable throwable_1 = Standard.silentError(() -> {
                 Thread.currentThread().setName("SENDER    ");
-                final OutputStreamManager outputStreamManager = new OutputStreamManager(outputStream);
-                Logger.log("outputStreamManager=" + outputStreamManager);
+                final TunnelOutputStream tunnelOutputStream = new TunnelOutputStream(outputStream);
+                Logger.log("tunnelOutputStream=" + tunnelOutputStream);
                 final ExecutorService executorService_2 = Executors.newFixedThreadPool(3);
                 Logger.log("executorService_2=" + executorService_2);
                 executorService_2.submit(() -> {
                     final Throwable throwable_2 = Standard.silentError(() -> {
                         Thread.currentThread().setName("SENDER-" + STREAM_ONE + "  ");
-                        final EndableOutputStream endableOutputStream = outputStreamManager.createOutputStream(STREAM_ONE);
+                        final EndableOutputStream endableOutputStream = tunnelOutputStream.createOutputStream(STREAM_ONE);
                         Logger.log("endableOutputStream=" + endableOutputStream);
                         final DataOutputStream dataOutputStream = new DataOutputStream(endableOutputStream);
                         Logger.log("endableOutputStream=" + dataOutputStream);
@@ -269,7 +269,7 @@ public class OutputStreamManagerTest {
                 executorService_2.submit(() -> {
                     final Throwable throwable_2 = Standard.silentError(() -> {
                         Thread.currentThread().setName("SENDER-" + STREAM_TWO + "  ");
-                        final EndableOutputStream endableOutputStream = outputStreamManager.createOutputStream(STREAM_TWO);
+                        final EndableOutputStream endableOutputStream = tunnelOutputStream.createOutputStream(STREAM_TWO);
                         Logger.log("endableOutputStream=" + endableOutputStream);
                         final ObjectOutputStream objectOutputStream = new ObjectOutputStream(endableOutputStream);
                         Logger.log("objectOutputStream=" + objectOutputStream);
@@ -293,7 +293,7 @@ public class OutputStreamManagerTest {
                 executorService_2.submit(() -> {
                     final Throwable throwable_2 = Standard.silentError(() -> {
                         Thread.currentThread().setName("SENDER-" + STREAM_THREE + "  ");
-                        final EndableOutputStream endableOutputStream = outputStreamManager.createOutputStream(STREAM_THREE);
+                        final EndableOutputStream endableOutputStream = tunnelOutputStream.createOutputStream(STREAM_THREE);
                         Logger.log("endableOutputStream=" + endableOutputStream);
                         final ObjectOutputStream objectOutputStream = new ObjectOutputStream(endableOutputStream);
                         Logger.log("objectOutputStream=" + objectOutputStream);
@@ -317,9 +317,9 @@ public class OutputStreamManagerTest {
                 Logger.log("executorService_2=" + executorService_2);
                 executorService_2.awaitTermination(10, TimeUnit.MINUTES);
                 Logger.log("executorService_2=" + executorService_2);
-                Logger.log("closing " + outputStreamManager);
+                Logger.log("closing " + tunnelOutputStream);
                 //Thread.sleep(1000);
-                outputStreamManager.close();
+                tunnelOutputStream.close();
                 //outputStream.flush();
                 //outputStream.close();
             });

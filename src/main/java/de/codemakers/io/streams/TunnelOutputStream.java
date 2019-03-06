@@ -24,12 +24,12 @@ import de.codemakers.io.streams.exceptions.StreamClosedException;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class OutputStreamManager extends OutputStream {
+public class TunnelOutputStream extends OutputStream {
     
     protected final OutputStream outputStream;
     protected final BiMap<Byte, EndableOutputStream> outputStreams = Maps.synchronizedBiMap(HashBiMap.create());
     
-    public OutputStreamManager(OutputStream outputStream) {
+    public TunnelOutputStream(OutputStream outputStream) {
         this.outputStream = outputStream;
     }
     
@@ -102,17 +102,17 @@ public class OutputStreamManager extends OutputStream {
         final OutputStream outputStream = new OutputStream() {
             @Override
             public synchronized void write(int b) throws IOException {
-                OutputStreamManager.this.write(id, b);
+                TunnelOutputStream.this.write(id, b);
             }
             
             @Override
             public synchronized void flush() throws IOException {
-                OutputStreamManager.this.flush();
+                TunnelOutputStream.this.flush();
             }
             
             @Override
             public synchronized void close() throws IOException {
-                OutputStreamManager.this.outputStreams.remove(id);
+                TunnelOutputStream.this.outputStreams.remove(id);
             }
         };
         final EndableOutputStream endableOutputStream = new EndableOutputStream(outputStream);

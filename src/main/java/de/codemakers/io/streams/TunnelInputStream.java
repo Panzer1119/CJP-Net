@@ -28,13 +28,13 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class InputStreamManager extends InputStream {
+public class TunnelInputStream extends InputStream {
     
     protected final InputStream inputStream;
     protected final BiMap<Byte, EndableInputStream> inputStreams = Maps.synchronizedBiMap(HashBiMap.create());
     protected final Map<Byte, Queue<Integer>> queues = new ConcurrentHashMap<>();
     
-    public InputStreamManager(InputStream inputStream) {
+    public TunnelInputStream(InputStream inputStream) {
         this.inputStream = inputStream;
         //this.inputStream = new BufferedInputStream(inputStream);
     }
@@ -132,17 +132,17 @@ public class InputStreamManager extends InputStream {
         final InputStream inputStream = new InputStream() {
             @Override
             public synchronized int read() throws IOException {
-                return InputStreamManager.this.read(id);
+                return TunnelInputStream.this.read(id);
             }
             
             @Override
             public synchronized int available() throws IOException {
-                return InputStreamManager.this.available(id);
+                return TunnelInputStream.this.available(id);
             }
             
             @Override
             public synchronized void close() throws IOException {
-                InputStreamManager.this.inputStreams.remove(id);
+                TunnelInputStream.this.inputStreams.remove(id);
             }
         };
         final EndableInputStream endableInputStream = new EndableInputStream(inputStream);
