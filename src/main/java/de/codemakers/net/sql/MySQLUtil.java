@@ -16,8 +16,6 @@
 
 package de.codemakers.net.sql;
 
-import de.codemakers.base.logger.Logger;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 
@@ -25,19 +23,6 @@ public class MySQLUtil {
     
     public static final String FORMAT_CONNECTION_H_D_U_P = "jdbc:mysql://%s/%s?user=%s&password=%s";
     public static final String FORMAT_CONNECTION_H_D = "jdbc:mysql://%s/%s";
-    
-    static {
-        //testForDriver();
-    }
-    
-    @Deprecated
-    private static void testForDriver() {
-        try {
-            Class.forName("com.mysql.jdbc.Driver");
-        } catch (Exception ex) {
-            Logger.handleError(ex);
-        }
-    }
     
     public static Connection connect(String host, String database, String username, byte[] password) throws Exception {
         return connect(host, database, username, new String(password));
