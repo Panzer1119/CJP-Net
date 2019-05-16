@@ -24,12 +24,24 @@ public class MySQLUtil {
     public static final String FORMAT_CONNECTION_H_D_U_P = "jdbc:mysql://%s/%s?user=%s&password=%s";
     public static final String FORMAT_CONNECTION_H_D = "jdbc:mysql://%s/%s";
     
+    public static String getConnectionString(String host, String database, String username, byte[] password) {
+        return getConnectionString(host, database, username, new String(password));
+    }
+    
+    public static String getConnectionString(String host, String database, String username, String password) {
+        return String.format(FORMAT_CONNECTION_H_D_U_P, host, database, username, password);
+    }
+    
+    public static String getConnectionString(String host, String database) {
+        return String.format(FORMAT_CONNECTION_H_D, host, database);
+    }
+    
     public static Connection connect(String host, String database, String username, byte[] password) throws Exception {
         return connect(host, database, username, new String(password));
     }
     
     public static Connection connect(String host, String database, String username, String password) throws Exception {
-        return connect(String.format(FORMAT_CONNECTION_H_D_U_P, host, database, username, password));
+        return connect(getConnectionString(host, database, username, password));
     }
     
     public static Connection connect(String connectionString) throws Exception {
