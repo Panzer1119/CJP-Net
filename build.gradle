@@ -36,7 +36,7 @@ dependencies {
     //implementation 'com.github.Panzer1119:CJP-Base:v1.8.0_172-alpha.43'
     //implementation 'com.github.Panzer1119:CJP-Base:dev-SNAPSHOT' //20.01.2019 22:45
     //implementation 'com.github.Panzer1119:CJP-Base:43b8e0c0e6' //28.01.2019 21:47
-    implementation 'com.github.Panzer1119:CJP-Base:867da8e6' //16.05.2019 21:24
+    implementation 'com.github.Panzer1119:CJP-Base:95d3e65a' //17.05.2019 19:17
     testCompile group: 'mysql', name: 'mysql-connector-java', version: '8.0.16'
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
