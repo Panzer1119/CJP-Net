@@ -25,8 +25,12 @@ public class MySQLDatabaseManager extends DatabaseManager {
     private final String connectionString;
     
     public MySQLDatabaseManager(String host, String database, String username, String password) {
-        super(host, database, username, password);
-        this.connectionString = MySQLUtil.getConnectionString(host, database, username, password);
+        this(host, -1, database, username, password);
+    }
+    
+    public MySQLDatabaseManager(String host, int port, String database, String username, String password) {
+        super(host, port, database, username, password);
+        this.connectionString = MySQLUtil.getConnectionString(host, port, username, password, database);
     }
     
     protected String getConnectionString() {
