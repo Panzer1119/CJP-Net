@@ -189,20 +189,48 @@ public class UDPServerSocket implements Closeable, Connectable, Disconnectable, 
         return pipedStreamTable.get(inetAddress, port).getInputStream();
     }
     
+    public boolean closeConnections() {
+        pipedStreamTable.values().forEach(PipedStream::closeWithoutException);
+        return !pipedStreamTable.isEmpty();
+    }
+    
+    public boolean closeConnections(InetAddress inetAddress) {
+        pipedStreamTable.rowMap().get(inetAddress).values().forEach(PipedStream::closeWithoutException);
+        return !pipedStreamTable.isEmpty();
+    }
+    
+    public boolean closeConnections(int port) {
+        pipedStreamTable.columnMap().get(port).values().forEach(PipedStream::closeWithoutException);
+        return !pipedStreamTable.isEmpty();
+    }
+    
+    public boolean closeConnection(InetAddress inetAddress, int port) {
+        final PipedStream pipedStream = pipedStreamTable.get(inetAddress, port);
+        if (pipedStream != null) {
+            pipedStream.closeWithoutException();
+            return true;
+        }
+        return false;
+    }
+    
     public boolean removeConnections() {
+        closeConnections();
         pipedStreamTable.clear();
         return pipedStreamTable.isEmpty();
     }
     
     public boolean removeConnections(InetAddress inetAddress) {
+        closeConnections(inetAddress);
         return pipedStreamTable.rowMap().remove(inetAddress) != null;
     }
     
     public boolean removeConnections(int port) {
+        closeConnections(port);
         return pipedStreamTable.columnMap().remove(port) != null;
     }
     
     public boolean removeConnection(InetAddress inetAddress, int port) {
+        closeConnection(inetAddress, port);
         return pipedStreamTable.remove(inetAddress, port) != null;
     }
     
