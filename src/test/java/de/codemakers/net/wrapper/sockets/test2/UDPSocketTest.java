@@ -34,6 +34,8 @@ public class UDPSocketTest {
         Logger.logDebug("udpSocket=" + udpSocket);
         udpSocket.setPortSender(PORT_SENDER);
         Logger.logDebug("udpSocket=" + udpSocket);
+        udpSocket.connect();
+        Logger.logDebug("udpSocket=" + udpSocket);
         udpSocket.start();
         Logger.logDebug("udpSocket=" + udpSocket);
         Standard.addShutdownHook(udpSocket::stop);
