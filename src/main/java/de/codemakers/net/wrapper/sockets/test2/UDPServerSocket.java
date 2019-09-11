@@ -42,11 +42,11 @@ public class UDPServerSocket implements Closeable, Connectable, Disconnectable, 
     protected final int port;
     protected final AtomicBoolean stopped = new AtomicBoolean(false);
     protected final Table<InetAddress, Integer, PipedStream> pipedStreamTable = HashBasedTable.create();
+    //Awaiting Stuff
+    protected final AtomicBoolean awaitingConnection = new AtomicBoolean(false);
     protected int bufferSize = DEFAULT_BUFFER_SIZE;
     protected DatagramSocket datagramSocket;
     protected Thread thread = null;
-    //Awaiting Stuff
-    protected final AtomicBoolean awaitingConnection = new AtomicBoolean(false);
     protected Doublet<InetAddress, Integer> connection_temp = null;
     
     public UDPServerSocket(int port, int bufferSize) {
@@ -189,6 +189,23 @@ public class UDPServerSocket implements Closeable, Connectable, Disconnectable, 
         return pipedStreamTable.get(inetAddress, port).getInputStream();
     }
     
+    public boolean removeConnections() {
+        pipedStreamTable.clear();
+        return pipedStreamTable.isEmpty();
+    }
+    
+    public boolean removeConnections(InetAddress inetAddress) {
+        return pipedStreamTable.rowMap().remove(inetAddress) != null;
+    }
+    
+    public boolean removeConnections(int port) {
+        return pipedStreamTable.columnMap().remove(port) != null;
+    }
+    
+    public boolean removeConnection(InetAddress inetAddress, int port) {
+        return pipedStreamTable.remove(inetAddress, port) != null;
+    }
+    
     @Override
     public boolean reset() throws Exception {
         pipedStreamTable.values().forEach((pipedStream) -> {
@@ -196,6 +213,11 @@ public class UDPServerSocket implements Closeable, Connectable, Disconnectable, 
             pipedStream.convertOutputStream(BufferedOutputStream::new);
         });
         return true;
+    }
+    
+    @Override
+    public String toString() {
+        return "UDPServerSocket{" + "port=" + port + ", stopped=" + stopped + ", pipedStreamTable=" + pipedStreamTable + ", awaitingConnection=" + awaitingConnection + ", bufferSize=" + bufferSize + ", datagramSocket=" + datagramSocket + ", thread=" + thread + ", connection_temp=" + connection_temp + '}';
     }
     
 }
