@@ -25,7 +25,6 @@ import de.codemakers.base.util.interfaces.Stoppable;
 import de.codemakers.io.streams.PipedStream;
 import de.codemakers.net.exceptions.NetRuntimeException;
 
-import java.io.BufferedOutputStream;
 import java.io.InputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -46,10 +45,12 @@ public class UDPServerSocket implements Closeable, Resettable, Startable, Stoppa
     protected final AtomicBoolean stopped = new AtomicBoolean(false);
     protected final Map<InetAddress, PipedStream> pipedStreams = new ConcurrentHashMap<>();
     protected final AtomicBoolean awaitingConnection = new AtomicBoolean(false);
+    protected final AtomicBoolean splitDataPerSource = new AtomicBoolean(true);
     protected int bufferSize;
     protected DatagramSocket datagramSocket = null;
     protected Thread thread = null;
     protected InetAddress inetAddress_temp = null;
+    protected PipedStream pipedStream = new PipedStream();
     
     public UDPServerSocket(int port, int bufferSize) {
         this.port = port;
@@ -82,11 +83,17 @@ public class UDPServerSocket implements Closeable, Resettable, Startable, Stoppa
         if (awaitingConnection.get()) {
             throw new NetRuntimeException("Already awaiting a new connection");
         }
+        if (!splitDataPerSource.get()) {
+            throw new NetRuntimeException("The data is combined in one Stream");
+        }
         awaitingConnection.set(true);
         final long timeout_ = (timeUnit == null ? -1 : (timeout == -1 ? -1 : timeUnit.toMillis(timeout)));
         final long started = System.currentTimeMillis();
         while (awaitingConnection.get() && inetAddress_temp == null && (timeout_ == -1 || (System.currentTimeMillis() - started) < timeout_)) {
             Standard.silentError(() -> Thread.sleep(100));
+            if (!splitDataPerSource.get()) {
+                throw new NetRuntimeException("The data is combined in one Stream");
+            }
         }
         awaitingConnection.set(false);
         final InetAddress temp = inetAddress_temp;
@@ -101,10 +108,8 @@ public class UDPServerSocket implements Closeable, Resettable, Startable, Stoppa
     
     @Override
     public boolean reset() throws Exception {
-        pipedStreams.values().forEach((pipedStream) -> {
-            pipedStream.resetWithoutException();
-            pipedStream.convertOutputStream(BufferedOutputStream::new);
-        });
+        pipedStreams.values().forEach(PipedStream::resetWithoutException);
+        pipedStream.resetWithoutException();
         if (datagramSocket == null) {
             datagramSocket = new DatagramSocket(port);
         }
@@ -128,16 +133,21 @@ public class UDPServerSocket implements Closeable, Resettable, Startable, Stoppa
                     read = datagramPacket.getLength();
                     final InetAddress inetAddress = datagramPacket.getAddress();
                     final int port = datagramPacket.getPort();
-                    final PipedStream pipedStream = pipedStreams.computeIfAbsent(inetAddress, (inetAddress_) -> {
-                        if (awaitingConnection.get()) {
-                            inetAddress_temp = inetAddress;
-                            awaitingConnection.set(false);
-                        }
-                        if (allowNewConnection(inetAddress, port)) {
-                            return new PipedStream();
-                        }
-                        return null;
-                    });
+                    PipedStream pipedStream = null;
+                    if (splitDataPerSource.get()) {
+                        pipedStream = pipedStreams.computeIfAbsent(inetAddress, (inetAddress_) -> {
+                            if (awaitingConnection.get()) {
+                                inetAddress_temp = inetAddress;
+                                awaitingConnection.set(false);
+                            }
+                            if (allowNewConnection(inetAddress, port)) {
+                                return new PipedStream();
+                            }
+                            return null;
+                        });
+                    } else {
+                        pipedStream = this.pipedStream;
+                    }
                     if (pipedStream == null) {
                         continue;
                     }
@@ -185,19 +195,44 @@ public class UDPServerSocket implements Closeable, Resettable, Startable, Stoppa
         return this;
     }
     
+    public boolean isDataSplitPerSource() {
+        return splitDataPerSource.get();
+    }
+    
+    public UDPServerSocket setSplitDataPerSource(boolean splitDataPerSource) {
+        this.splitDataPerSource.set(splitDataPerSource);
+        return this;
+    }
+    
     public Map<InetAddress, InputStream> getInputStreamsMapped() {
+        if (!splitDataPerSource.get()) {
+            throw new NetRuntimeException("The data is combined in one Stream");
+        }
         return pipedStreams.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, (entry) -> entry.getValue().getInputStream()));
     }
     
     public List<InputStream> getInputStreams() {
+        if (!splitDataPerSource.get()) {
+            throw new NetRuntimeException("The data is combined in one Stream");
+        }
         return pipedStreams.values().stream().map(PipedStream::getInputStream).collect(Collectors.toList());
     }
     
     public InputStream getInputStream(InetAddress inetAddress) {
+        if (!splitDataPerSource.get()) {
+            throw new NetRuntimeException("The data is combined in one Stream");
+        }
         if (!pipedStreams.containsKey(inetAddress)) {
             return null;
         }
         return pipedStreams.get(inetAddress).getInputStream();
+    }
+    
+    public InputStream getInputStream() {
+        if (splitDataPerSource.get()) {
+            throw new NetRuntimeException("The data is split per InetAddress");
+        }
+        return pipedStream.getInputStream();
     }
     
     public boolean closeConnections() {
@@ -227,7 +262,7 @@ public class UDPServerSocket implements Closeable, Resettable, Startable, Stoppa
     
     @Override
     public String toString() {
-        return "UDPServerSocket{" + "port=" + port + ", stopped=" + stopped + ", pipedStreams=" + pipedStreams + ", awaitingConnection=" + awaitingConnection + ", bufferSize=" + bufferSize + ", datagramSocket=" + datagramSocket + ", thread=" + thread + ", inetAddress_temp=" + inetAddress_temp + '}';
+        return "UDPServerSocket{" + "port=" + port + ", stopped=" + stopped + ", pipedStreams=" + pipedStreams + ", awaitingConnection=" + awaitingConnection + ", splitDataPerSource=" + splitDataPerSource + ", bufferSize=" + bufferSize + ", datagramSocket=" + datagramSocket + ", thread=" + thread + ", inetAddress_temp=" + inetAddress_temp + ", pipedStream=" + pipedStream + '}';
     }
     
 }
