@@ -18,19 +18,17 @@ package de.codemakers.net.wrapper.sockets.test2;
 
 import de.codemakers.base.Standard;
 import de.codemakers.base.logger.Logger;
-import de.codemakers.base.util.interfaces.Closeable;
-import de.codemakers.base.util.interfaces.Resettable;
-import de.codemakers.base.util.interfaces.Startable;
-import de.codemakers.base.util.interfaces.Stoppable;
+import de.codemakers.base.util.interfaces.*;
 import de.codemakers.io.streams.PipedStream;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class UDPSocket implements Closeable, Resettable, Startable, Stoppable {
+public class UDPSocket implements Closeable, Connectable, Resettable, Startable, Stoppable {
     
     public static final int DEFAULT_BUFFER_SIZE = 128;
     
@@ -43,27 +41,46 @@ public class UDPSocket implements Closeable, Resettable, Startable, Stoppable {
     protected DatagramSocket datagramSocket = null;
     protected Thread thread = null;
     
-    public UDPSocket(InetAddress inetAddress, int port, int bufferSize) {
+    public UDPSocket(InetAddress inetAddress, int port_sender, int port_receiver, int bufferSize) {
         this.inetAddress = inetAddress;
-        this.port_sender = port;
-        this.port_receiver = port_sender;
+        this.port_sender = port_sender;
+        this.port_receiver = port_receiver;
         this.bufferSize = bufferSize;
     }
     
-    public UDPSocket(InetAddress inetAddress, int port) {
-        this(inetAddress, port, DEFAULT_BUFFER_SIZE);
+    public UDPSocket(InetAddress inetAddress, int port_sender, int port_receiver) {
+        this(inetAddress, port_sender, port_receiver, DEFAULT_BUFFER_SIZE);
     }
     
-    public UDPSocket(DatagramSocket datagramSocket, int bufferSize) {
-        this.inetAddress = datagramSocket.getInetAddress();
-        this.port_sender = datagramSocket.getPort();
-        this.port_receiver = port_sender;
+    public UDPSocket(InetAddress inetAddress, int port_sender) {
+        this(inetAddress, port_sender, port_sender);
+    }
+    
+    public UDPSocket(DatagramSocket datagramSocket, int port_receiver, int bufferSize) {
+        this(datagramSocket.getInetAddress(), datagramSocket.getLocalPort(), port_receiver, bufferSize);
         this.datagramSocket = datagramSocket;
-        this.bufferSize = bufferSize;
+    }
+    
+    public UDPSocket(DatagramSocket datagramSocket, int port_receiver) {
+        this(datagramSocket, port_receiver, DEFAULT_BUFFER_SIZE);
     }
     
     public UDPSocket(DatagramSocket datagramSocket) {
-        this(datagramSocket, DEFAULT_BUFFER_SIZE);
+        this(datagramSocket, datagramSocket.getLocalPort());
+    }
+    
+    private void initDatagramSocket() throws Exception {
+        if (datagramSocket == null) {
+            datagramSocket = new DatagramSocket(port_sender, inetAddress);
+        }
+    }
+    
+    @Override
+    public boolean connect(boolean reconnect) throws Exception {
+        initDatagramSocket();
+        final DatagramPacket datagramPacket = new DatagramPacket(new byte[0], 0, inetAddress, port_receiver);
+        datagramSocket.send(datagramPacket);
+        return true;
     }
     
     @Override
@@ -74,10 +91,7 @@ public class UDPSocket implements Closeable, Resettable, Startable, Stoppable {
     @Override
     public boolean reset() throws Exception {
         pipedStream.resetWithoutException();
-        //pipedStream.convertOutputStream(BufferedOutputStream::new); //TODO Necessary?
-        if (datagramSocket == null) {
-            datagramSocket = new DatagramSocket(port_sender, inetAddress);
-        }
+        initDatagramSocket();
         return true;
     }
     
@@ -98,7 +112,7 @@ public class UDPSocket implements Closeable, Resettable, Startable, Stoppable {
                     datagramSocket.send(datagramPacket);
                 }
             } catch (Exception ex) {
-                if (!(ex instanceof InterruptedException)) {
+                if (!(ex instanceof InterruptedException) && !(ex instanceof IOException)) {
                     Logger.handleError(ex);
                 }
             }

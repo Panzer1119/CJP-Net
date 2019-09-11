@@ -16,12 +16,12 @@
 
 package de.codemakers.net.wrapper.sockets.test2;
 
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Table;
 import de.codemakers.base.Standard;
 import de.codemakers.base.logger.Logger;
-import de.codemakers.base.multiplets.Doublet;
-import de.codemakers.base.util.interfaces.*;
+import de.codemakers.base.util.interfaces.Closeable;
+import de.codemakers.base.util.interfaces.Resettable;
+import de.codemakers.base.util.interfaces.Startable;
+import de.codemakers.base.util.interfaces.Stoppable;
 import de.codemakers.io.streams.PipedStream;
 import de.codemakers.net.exceptions.NetRuntimeException;
 
@@ -32,24 +32,24 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-public class UDPServerSocket implements Closeable, Connectable, Disconnectable, Resettable, Startable, Stoppable {
-    
-    public static boolean DEBUG = false;
+public class UDPServerSocket implements Closeable, Resettable, Startable, Stoppable {
     
     public static final int DEFAULT_BUFFER_SIZE = 128;
     
     protected final int port;
     protected final AtomicBoolean stopped = new AtomicBoolean(false);
-    protected final Table<InetAddress, Integer, PipedStream> pipedStreamTable = HashBasedTable.create();
+    protected final Map<InetAddress, PipedStream> pipedStreams = new ConcurrentHashMap<>();
     protected final AtomicBoolean awaitingConnection = new AtomicBoolean(false);
     protected int bufferSize;
-    protected DatagramSocket datagramSocket;
+    protected DatagramSocket datagramSocket = null;
     protected Thread thread = null;
-    protected Doublet<InetAddress, Integer> connection_temp = null;
+    protected InetAddress inetAddress_temp = null;
     
     public UDPServerSocket(int port, int bufferSize) {
         this.port = port;
@@ -61,7 +61,7 @@ public class UDPServerSocket implements Closeable, Connectable, Disconnectable, 
     }
     
     public UDPServerSocket(DatagramSocket datagramSocket, int bufferSize) {
-        this.port = datagramSocket.getPort(); //TODO This is a "Receiving" DatagramSocket so should i use getLocalPort() instead?
+        this.port = datagramSocket.getLocalPort();
         this.datagramSocket = datagramSocket;
         this.bufferSize = bufferSize;
     }
@@ -74,28 +74,23 @@ public class UDPServerSocket implements Closeable, Connectable, Disconnectable, 
         return true;
     }
     
-    public Doublet<InetAddress, Integer> accept() {
+    public InetAddress accept() {
         return accept(-1, null);
     }
     
-    public Doublet<InetAddress, Integer> accept(long timeout, TimeUnit timeUnit) {
+    public InetAddress accept(long timeout, TimeUnit timeUnit) {
         if (awaitingConnection.get()) {
             throw new NetRuntimeException("Already awaiting a new connection");
         }
         awaitingConnection.set(true);
         final long timeout_ = (timeUnit == null ? -1 : (timeout == -1 ? -1 : timeUnit.toMillis(timeout)));
         final long started = System.currentTimeMillis();
-        while (awaitingConnection.get() && connection_temp == null && (timeout_ == -1 || (System.currentTimeMillis() - started) < timeout_)) {
+        while (awaitingConnection.get() && inetAddress_temp == null && (timeout_ == -1 || (System.currentTimeMillis() - started) < timeout_)) {
             Standard.silentError(() -> Thread.sleep(100));
         }
-        if (DEBUG) {
-            if ((timeout_ != -1 && (System.currentTimeMillis() - started >= timeout_))) {
-                Logger.logDebug(String.format("%s timed out while waiting for a connection", this));
-            }
-        }
         awaitingConnection.set(false);
-        final Doublet<InetAddress, Integer> temp = connection_temp;
-        connection_temp = null;
+        final InetAddress temp = inetAddress_temp;
+        inetAddress_temp = null;
         return temp;
     }
     
@@ -105,20 +100,15 @@ public class UDPServerSocket implements Closeable, Connectable, Disconnectable, 
     }
     
     @Override
-    public boolean connect(boolean reconnect) throws Exception { //FIXME The connect/disconnect functions should be in the UDPSocket Class and NOT in this class (UDPServerSocket)?!
-        try {
+    public boolean reset() throws Exception {
+        pipedStreams.values().forEach((pipedStream) -> {
+            pipedStream.resetWithoutException();
+            pipedStream.convertOutputStream(BufferedOutputStream::new);
+        });
+        if (datagramSocket == null) {
             datagramSocket = new DatagramSocket(port);
-        } catch (Exception ex) {
-            Logger.handleError(ex);
         }
-        return datagramSocket.isConnected() && !datagramSocket.isClosed();
-    }
-    
-    @Override
-    public boolean disconnect() throws Exception { //FIXME The connect/disconnect functions should be in the UDPSocket Class and NOT in this class (UDPServerSocket)?!
-        awaitingConnection.set(false);
-        datagramSocket.disconnect();
-        return datagramSocket.isClosed();
+        return true;
     }
     
     @Override
@@ -127,7 +117,7 @@ public class UDPServerSocket implements Closeable, Connectable, Disconnectable, 
             return false;
         }
         stopped.set(false);
-        //resetWithoutException(); //TODO Necessary? Or more like do i want to force reset this here?
+        resetWithoutException();
         thread = new Thread(() -> {
             try {
                 final byte[] buffer = new byte[bufferSize];
@@ -138,18 +128,18 @@ public class UDPServerSocket implements Closeable, Connectable, Disconnectable, 
                     read = datagramPacket.getLength();
                     final InetAddress inetAddress = datagramPacket.getAddress();
                     final int port = datagramPacket.getPort();
-                    PipedStream pipedStream = pipedStreamTable.get(inetAddress, port);
-                    if (pipedStream == null) {
+                    final PipedStream pipedStream = pipedStreams.computeIfAbsent(inetAddress, (inetAddress_) -> {
                         if (awaitingConnection.get()) {
-                            connection_temp = new Doublet<>(inetAddress, port);
+                            inetAddress_temp = inetAddress;
                             awaitingConnection.set(false);
                         }
-                        if (!allowNewConnection(inetAddress, port)) {
-                            continue;
+                        if (allowNewConnection(inetAddress, port)) {
+                            return new PipedStream();
                         }
-                        pipedStream = new PipedStream();
-                        pipedStream.convertOutputStream(BufferedOutputStream::new);
-                        pipedStreamTable.put(inetAddress, port, pipedStream);
+                        return null;
+                    });
+                    if (pipedStream == null) {
+                        continue;
                     }
                     pipedStream.getOutputStream().write(buffer, 0, read);
                     pipedStream.getOutputStream().flush(); //TODO When should this be done?
@@ -171,6 +161,7 @@ public class UDPServerSocket implements Closeable, Connectable, Disconnectable, 
         }
         stopped.set(true);
         awaitingConnection.set(false);
+        //datagramSocket.disconnect();
         Standard.silentError(() -> Thread.sleep(100));
         thread.interrupt();
         thread = null;
@@ -194,42 +185,28 @@ public class UDPServerSocket implements Closeable, Connectable, Disconnectable, 
         return this;
     }
     
+    public Map<InetAddress, InputStream> getInputStreamsMapped() {
+        return pipedStreams.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, (entry) -> entry.getValue().getInputStream()));
+    }
+    
     public List<InputStream> getInputStreams() {
-        return pipedStreamTable.values().stream().map(PipedStream::getInputStream).collect(Collectors.toList());
+        return pipedStreams.values().stream().map(PipedStream::getInputStream).collect(Collectors.toList());
     }
     
-    public List<InputStream> getInputStreams(InetAddress inetAddress) {
-        return pipedStreamTable.row(inetAddress).values().stream().map(PipedStream::getInputStream).collect(Collectors.toList());
-    }
-    
-    public List<InputStream> getInputStreams(int port) {
-        return pipedStreamTable.column(port).values().stream().map(PipedStream::getInputStream).collect(Collectors.toList());
-    }
-    
-    public InputStream getInputStream(InetAddress inetAddress, int port) {
-        if (!pipedStreamTable.contains(inetAddress, port)) {
+    public InputStream getInputStream(InetAddress inetAddress) {
+        if (!pipedStreams.containsKey(inetAddress)) {
             return null;
         }
-        return pipedStreamTable.get(inetAddress, port).getInputStream();
+        return pipedStreams.get(inetAddress).getInputStream();
     }
     
     public boolean closeConnections() {
-        pipedStreamTable.values().forEach(PipedStream::closeWithoutException);
-        return !pipedStreamTable.isEmpty();
+        pipedStreams.values().forEach(PipedStream::closeWithoutException);
+        return !pipedStreams.isEmpty();
     }
     
-    public boolean closeConnections(InetAddress inetAddress) {
-        pipedStreamTable.rowMap().get(inetAddress).values().forEach(PipedStream::closeWithoutException);
-        return !pipedStreamTable.isEmpty();
-    }
-    
-    public boolean closeConnections(int port) {
-        pipedStreamTable.columnMap().get(port).values().forEach(PipedStream::closeWithoutException);
-        return !pipedStreamTable.isEmpty();
-    }
-    
-    public boolean closeConnection(InetAddress inetAddress, int port) {
-        final PipedStream pipedStream = pipedStreamTable.get(inetAddress, port);
+    public boolean closeConnection(InetAddress inetAddress) {
+        final PipedStream pipedStream = pipedStreams.get(inetAddress);
         if (pipedStream != null) {
             pipedStream.closeWithoutException();
             return true;
@@ -239,37 +216,18 @@ public class UDPServerSocket implements Closeable, Connectable, Disconnectable, 
     
     public boolean removeConnections() {
         closeConnections();
-        pipedStreamTable.clear();
-        return pipedStreamTable.isEmpty();
+        pipedStreams.clear();
+        return pipedStreams.isEmpty();
     }
     
-    public boolean removeConnections(InetAddress inetAddress) {
-        closeConnections(inetAddress);
-        return pipedStreamTable.rowMap().remove(inetAddress) != null;
-    }
-    
-    public boolean removeConnections(int port) {
-        closeConnections(port);
-        return pipedStreamTable.columnMap().remove(port) != null;
-    }
-    
-    public boolean removeConnection(InetAddress inetAddress, int port) {
-        closeConnection(inetAddress, port);
-        return pipedStreamTable.remove(inetAddress, port) != null;
-    }
-    
-    @Override
-    public boolean reset() throws Exception {
-        pipedStreamTable.values().forEach((pipedStream) -> {
-            pipedStream.resetWithoutException();
-            pipedStream.convertOutputStream(BufferedOutputStream::new);
-        });
-        return true;
+    public boolean removeConnection(InetAddress inetAddress) {
+        closeConnection(inetAddress);
+        return pipedStreams.remove(inetAddress) != null;
     }
     
     @Override
     public String toString() {
-        return "UDPServerSocket{" + "port=" + port + ", stopped=" + stopped + ", pipedStreamTable=" + pipedStreamTable + ", awaitingConnection=" + awaitingConnection + ", bufferSize=" + bufferSize + ", datagramSocket=" + datagramSocket + ", thread=" + thread + ", connection_temp=" + connection_temp + '}';
+        return "UDPServerSocket{" + "port=" + port + ", stopped=" + stopped + ", pipedStreams=" + pipedStreams + ", awaitingConnection=" + awaitingConnection + ", bufferSize=" + bufferSize + ", datagramSocket=" + datagramSocket + ", thread=" + thread + ", inetAddress_temp=" + inetAddress_temp + '}';
     }
     
 }

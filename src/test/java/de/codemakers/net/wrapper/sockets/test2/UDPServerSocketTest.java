@@ -19,7 +19,6 @@ package de.codemakers.net.wrapper.sockets.test2;
 import de.codemakers.base.Standard;
 import de.codemakers.base.logger.LogLevel;
 import de.codemakers.base.logger.Logger;
-import de.codemakers.base.multiplets.Doublet;
 
 import java.io.InputStream;
 import java.net.InetAddress;
@@ -33,27 +32,23 @@ public class UDPServerSocketTest {
     public static void main(String[] args) throws Exception {
         Logger.getDefaultAdvancedLeveledLogger().setMinimumLogLevel(LogLevel.FINE);
         Logger.getDefaultAdvancedLeveledLogger().createLogFormatBuilder().appendThread().appendLogLevel().appendText(": ").appendObject().appendNewLine().appendSource().finishWithoutException();
-        UDPServerSocket.DEBUG = true;
         final UDPServerSocket udpServerSocket = new UDPServerSocket(PORT_RECEIVER);
-        Logger.logDebug("udpServerSocket=" + udpServerSocket);
-        udpServerSocket.connect();
         Logger.logDebug("udpServerSocket=" + udpServerSocket);
         udpServerSocket.start();
         Logger.logDebug("udpServerSocket=" + udpServerSocket);
-        Standard.addShutdownHook(udpServerSocket::disconnect);
         Standard.addShutdownHook(udpServerSocket::stop);
         Standard.addShutdownHook(udpServerSocket::close);
         Standard.async(() -> {
             Logger.logDebug("Waiting for connection");
-            final Doublet<InetAddress, Integer> connection = udpServerSocket.accept();
+            final InetAddress connection = udpServerSocket.accept();
             Logger.logDebug("connection=" + connection);
             InputStream inputStream = null;
             if (true) {
-                inputStream = udpServerSocket.getInputStream(connection.getA(), connection.getB());
+                inputStream = udpServerSocket.getInputStream(connection);
             } else {
                 int i = 0;
                 while (inputStream == null) {
-                    inputStream = udpServerSocket.getInputStream(InetAddress.getLocalHost(), PORT_SENDER);
+                    inputStream = udpServerSocket.getInputStream(InetAddress.getLocalHost());
                     Thread.sleep(100);
                 }
             }
@@ -64,7 +59,7 @@ public class UDPServerSocketTest {
                 read = inputStream.read(buffer, 0, buffer.length);
                 final byte[] temp = new byte[read];
                 System.arraycopy(buffer, 0, temp, 0, read);
-                Logger.logDebug(String.format("Received %d Bytes: %s", read, Arrays.toString(temp)));
+                Logger.logDebug(String.format("Received %d Bytes: %s (\"%s\")", read, Arrays.toString(temp), new String(temp)));
             }
             Logger.logDebug("Receiving ended");
         });
