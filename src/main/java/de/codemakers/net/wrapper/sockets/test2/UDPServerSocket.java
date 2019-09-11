@@ -30,6 +30,7 @@ import java.io.InputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -37,14 +38,15 @@ import java.util.stream.Collectors;
 
 public class UDPServerSocket implements Closeable, Connectable, Disconnectable, Resettable, Startable, Stoppable {
     
+    public static boolean DEBUG = false;
+    
     public static final int DEFAULT_BUFFER_SIZE = 128;
     
     protected final int port;
     protected final AtomicBoolean stopped = new AtomicBoolean(false);
     protected final Table<InetAddress, Integer, PipedStream> pipedStreamTable = HashBasedTable.create();
-    //Awaiting Stuff
     protected final AtomicBoolean awaitingConnection = new AtomicBoolean(false);
-    protected int bufferSize = DEFAULT_BUFFER_SIZE;
+    protected int bufferSize;
     protected DatagramSocket datagramSocket;
     protected Thread thread = null;
     protected Doublet<InetAddress, Integer> connection_temp = null;
@@ -55,7 +57,17 @@ public class UDPServerSocket implements Closeable, Connectable, Disconnectable, 
     }
     
     public UDPServerSocket(int port) {
-        this.port = port;
+        this(port, DEFAULT_BUFFER_SIZE);
+    }
+    
+    public UDPServerSocket(DatagramSocket datagramSocket, int bufferSize) {
+        this.port = datagramSocket.getPort(); //TODO This is a "Receiving" DatagramSocket so should i use getLocalPort() instead?
+        this.datagramSocket = datagramSocket;
+        this.bufferSize = bufferSize;
+    }
+    
+    public UDPServerSocket(DatagramSocket datagramSocket) {
+        this(datagramSocket, DEFAULT_BUFFER_SIZE);
     }
     
     public boolean allowNewConnection(InetAddress inetAddress, int port) {
@@ -76,6 +88,11 @@ public class UDPServerSocket implements Closeable, Connectable, Disconnectable, 
         while (awaitingConnection.get() && connection_temp == null && (timeout_ == -1 || (System.currentTimeMillis() - started) < timeout_)) {
             Standard.silentError(() -> Thread.sleep(100));
         }
+        if (DEBUG) {
+            if ((timeout_ != -1 && (System.currentTimeMillis() - started >= timeout_))) {
+                Logger.logDebug(String.format("%s timed out while waiting for a connection", this));
+            }
+        }
         awaitingConnection.set(false);
         final Doublet<InetAddress, Integer> temp = connection_temp;
         connection_temp = null;
@@ -88,7 +105,7 @@ public class UDPServerSocket implements Closeable, Connectable, Disconnectable, 
     }
     
     @Override
-    public boolean connect(boolean reconnect) throws Exception {
+    public boolean connect(boolean reconnect) throws Exception { //FIXME The connect/disconnect functions should be in the UDPSocket Class and NOT in this class (UDPServerSocket)?!
         try {
             datagramSocket = new DatagramSocket(port);
         } catch (Exception ex) {
@@ -98,7 +115,8 @@ public class UDPServerSocket implements Closeable, Connectable, Disconnectable, 
     }
     
     @Override
-    public boolean disconnect() throws Exception {
+    public boolean disconnect() throws Exception { //FIXME The connect/disconnect functions should be in the UDPSocket Class and NOT in this class (UDPServerSocket)?!
+        awaitingConnection.set(false);
         datagramSocket.disconnect();
         return datagramSocket.isClosed();
     }
@@ -109,7 +127,7 @@ public class UDPServerSocket implements Closeable, Connectable, Disconnectable, 
             return false;
         }
         stopped.set(false);
-        //reset(); //TODO Necessary? Or more like do i want to force reset this here?
+        //resetWithoutException(); //TODO Necessary? Or more like do i want to force reset this here?
         thread = new Thread(() -> {
             try {
                 final byte[] buffer = new byte[bufferSize];
@@ -134,9 +152,10 @@ public class UDPServerSocket implements Closeable, Connectable, Disconnectable, 
                         pipedStreamTable.put(inetAddress, port, pipedStream);
                     }
                     pipedStream.getOutputStream().write(buffer, 0, read);
+                    pipedStream.getOutputStream().flush(); //TODO When should this be done?
                 }
             } catch (Exception ex) {
-                if (!(ex instanceof InterruptedException)) {
+                if (!(ex instanceof InterruptedException) && !(ex instanceof SocketException)) {
                     Logger.handleError(ex);
                 }
             }
@@ -151,9 +170,11 @@ public class UDPServerSocket implements Closeable, Connectable, Disconnectable, 
             return false;
         }
         stopped.set(true);
+        awaitingConnection.set(false);
+        Standard.silentError(() -> Thread.sleep(100));
         thread.interrupt();
         thread = null;
-        return !thread.isAlive();
+        return true;
     }
     
     public int getPort() {
@@ -186,6 +207,9 @@ public class UDPServerSocket implements Closeable, Connectable, Disconnectable, 
     }
     
     public InputStream getInputStream(InetAddress inetAddress, int port) {
+        if (!pipedStreamTable.contains(inetAddress, port)) {
+            return null;
+        }
         return pipedStreamTable.get(inetAddress, port).getInputStream();
     }
     
