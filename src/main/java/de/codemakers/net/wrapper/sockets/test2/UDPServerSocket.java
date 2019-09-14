@@ -282,7 +282,7 @@ public class UDPServerSocket implements Closeable, Resettable, Startable, Stoppa
     
     @Override
     public String toString() {
-        return "UDPServerSocket{" + "port=" + port + ", stopped=" + stopped + ", pipedStreams=" + pipedStreams + ", awaitingConnection=" + awaitingConnection + ", splitDataPerSource=" + splitDataPerSource + ", bufferSize=" + bufferSize + ", datagramSocket=" + datagramSocket + ", thread=" + thread + ", inetAddress_temp=" + inetAddress_temp + ", pipedStream=" + pipedStream + '}';
+        return "UDPServerSocket{" + "port=" + port + ", awaitingConnection=" + awaitingConnection + ", splitDataPerSource=" + splitDataPerSource + ", flushOutputStreams=" + flushOutputStreams + ", stopped=" + stopped + ", pipedStreams=" + pipedStreams + ", bufferSize=" + bufferSize + ", datagramSocket=" + datagramSocket + ", thread=" + thread + ", inetAddress_temp=" + inetAddress_temp + ", pipedStream=" + pipedStream + '}';
     }
     
 }
