@@ -44,6 +44,7 @@ public class UDPServerSocket implements Closeable, Resettable, Startable, Stoppa
     protected final int port;
     protected final AtomicBoolean awaitingConnection = new AtomicBoolean(false);
     protected final AtomicBoolean splitDataPerSource = new AtomicBoolean(true);
+    protected final AtomicBoolean flushOutputStreams = new AtomicBoolean(true);
     protected final AtomicBoolean stopped = new AtomicBoolean(false);
     protected final Map<InetAddress, PipedStream> pipedStreams = new ConcurrentHashMap<>();
     protected int bufferSize;
@@ -153,7 +154,9 @@ public class UDPServerSocket implements Closeable, Resettable, Startable, Stoppa
                         continue;
                     }
                     pipedStream.getOutputStream().write(buffer, 0, read);
-                    pipedStream.getOutputStream().flush(); //TODO When should this be done?
+                    if (flushOutputStreams.get()) {
+                        pipedStream.getOutputStream().flush();
+                    }
                 }
             } catch (Exception ex) {
                 if (!(ex instanceof InterruptedException) && !(ex instanceof SocketException)) {
@@ -201,6 +204,15 @@ public class UDPServerSocket implements Closeable, Resettable, Startable, Stoppa
     
     public UDPServerSocket setSplitDataPerSource(boolean splitDataPerSource) {
         this.splitDataPerSource.set(splitDataPerSource);
+        return this;
+    }
+    
+    public boolean areOutputStreamsFlushed() {
+        return flushOutputStreams.get();
+    }
+    
+    public UDPServerSocket setFlushOutputStreams(boolean flushOutputStreams) {
+        this.flushOutputStreams.set(flushOutputStreams);
         return this;
     }
     
