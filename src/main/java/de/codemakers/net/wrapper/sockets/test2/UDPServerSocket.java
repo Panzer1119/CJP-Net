@@ -42,10 +42,10 @@ public class UDPServerSocket implements Closeable, Resettable, Startable, Stoppa
     public static final int DEFAULT_BUFFER_SIZE = 128;
     
     protected final int port;
-    protected final AtomicBoolean stopped = new AtomicBoolean(false);
-    protected final Map<InetAddress, PipedStream> pipedStreams = new ConcurrentHashMap<>();
     protected final AtomicBoolean awaitingConnection = new AtomicBoolean(false);
     protected final AtomicBoolean splitDataPerSource = new AtomicBoolean(true);
+    protected final AtomicBoolean stopped = new AtomicBoolean(false);
+    protected final Map<InetAddress, PipedStream> pipedStreams = new ConcurrentHashMap<>();
     protected int bufferSize;
     protected DatagramSocket datagramSocket = null;
     protected Thread thread = null;
@@ -62,9 +62,8 @@ public class UDPServerSocket implements Closeable, Resettable, Startable, Stoppa
     }
     
     public UDPServerSocket(DatagramSocket datagramSocket, int bufferSize) {
-        this.port = datagramSocket.getLocalPort();
+        this(datagramSocket.getLocalPort(), bufferSize);
         this.datagramSocket = datagramSocket;
-        this.bufferSize = bufferSize;
     }
     
     public UDPServerSocket(DatagramSocket datagramSocket) {
@@ -104,6 +103,8 @@ public class UDPServerSocket implements Closeable, Resettable, Startable, Stoppa
     @Override
     public void closeIntern() throws Exception {
         datagramSocket.close();
+        pipedStream.closeWithoutException();
+        pipedStreams.values().forEach(PipedStream::closeWithoutException);
     }
     
     @Override
@@ -171,7 +172,6 @@ public class UDPServerSocket implements Closeable, Resettable, Startable, Stoppa
         }
         stopped.set(true);
         awaitingConnection.set(false);
-        //datagramSocket.disconnect();
         Standard.silentError(() -> Thread.sleep(100));
         thread.interrupt();
         thread = null;
@@ -230,7 +230,7 @@ public class UDPServerSocket implements Closeable, Resettable, Startable, Stoppa
     
     public InputStream getInputStream() {
         if (splitDataPerSource.get()) {
-            throw new NetRuntimeException("The data is split per InetAddress");
+            throw new NetRuntimeException("The data is split per " + InetAddress.class.getSimpleName());
         }
         return pipedStream.getInputStream();
     }
@@ -242,6 +242,14 @@ public class UDPServerSocket implements Closeable, Resettable, Startable, Stoppa
     
     public boolean closeConnection(InetAddress inetAddress) {
         final PipedStream pipedStream = pipedStreams.get(inetAddress);
+        if (pipedStream != null) {
+            pipedStream.closeWithoutException();
+            return true;
+        }
+        return false;
+    }
+    
+    public boolean closeConnection() {
         if (pipedStream != null) {
             pipedStream.closeWithoutException();
             return true;

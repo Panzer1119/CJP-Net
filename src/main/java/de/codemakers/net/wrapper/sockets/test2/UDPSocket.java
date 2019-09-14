@@ -20,6 +20,7 @@ import de.codemakers.base.Standard;
 import de.codemakers.base.logger.Logger;
 import de.codemakers.base.util.interfaces.*;
 import de.codemakers.io.streams.PipedStream;
+import de.codemakers.net.exceptions.NetRuntimeException;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -52,17 +53,17 @@ public class UDPSocket implements Closeable, Connectable, Resettable, Startable,
         this(inetAddress, port_sender, port_receiver, DEFAULT_BUFFER_SIZE);
     }
     
-    public UDPSocket(InetAddress inetAddress, int port_sender) {
-        this(inetAddress, port_sender, port_sender);
+    public UDPSocket(InetAddress inetAddress, int port) {
+        this(inetAddress, port, port);
     }
     
-    public UDPSocket(DatagramSocket datagramSocket, int port_receiver, int bufferSize) {
-        this(datagramSocket.getInetAddress(), datagramSocket.getLocalPort(), port_receiver, bufferSize);
+    public UDPSocket(DatagramSocket datagramSocket, int port, int bufferSize) {
+        this(datagramSocket.getInetAddress(), datagramSocket.getLocalPort(), port, bufferSize);
         this.datagramSocket = datagramSocket;
     }
     
-    public UDPSocket(DatagramSocket datagramSocket, int port_receiver) {
-        this(datagramSocket, port_receiver, DEFAULT_BUFFER_SIZE);
+    public UDPSocket(DatagramSocket datagramSocket, int port) {
+        this(datagramSocket, port, DEFAULT_BUFFER_SIZE);
     }
     
     public UDPSocket(DatagramSocket datagramSocket) {
@@ -78,8 +79,7 @@ public class UDPSocket implements Closeable, Connectable, Resettable, Startable,
     @Override
     public boolean connect(boolean reconnect) throws Exception {
         initDatagramSocket();
-        final DatagramPacket datagramPacket = new DatagramPacket(new byte[0], 0, inetAddress, port_receiver);
-        datagramSocket.send(datagramPacket);
+        datagramSocket.send(new DatagramPacket(new byte[0], 0, inetAddress, port_receiver));
         return true;
     }
     
@@ -108,8 +108,7 @@ public class UDPSocket implements Closeable, Connectable, Resettable, Startable,
                 int read = 0;
                 while (!stopped.get() && read != -1) {
                     read = pipedStream.getInputStream().read(buffer, 0, buffer.length);
-                    final DatagramPacket datagramPacket = new DatagramPacket(buffer, read, inetAddress, port_receiver);
-                    datagramSocket.send(datagramPacket);
+                    datagramSocket.send(new DatagramPacket(buffer, read, inetAddress, port_receiver));
                 }
             } catch (Exception ex) {
                 if (!(ex instanceof InterruptedException) && !(ex instanceof IOException)) {
@@ -142,7 +141,14 @@ public class UDPSocket implements Closeable, Connectable, Resettable, Startable,
     }
     
     public UDPSocket setPortSender(int port_sender) {
-        this.port_sender = port_sender;
+        if (!stopped.get()) {
+            throw new NetRuntimeException(getClass().getSimpleName() + " is currently running on port " + this.port_sender);
+        }
+        if (this.port_sender != port_sender) {
+            this.port_sender = port_sender;
+            datagramSocket = null;
+            Standard.silentError(this::initDatagramSocket);
+        }
         return this;
     }
     
