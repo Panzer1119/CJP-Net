@@ -101,9 +101,20 @@ public class UDPServerSocket implements Closeable, Resettable, Startable, Stoppa
         return temp;
     }
     
+    private void initDatagramSocket() throws Exception {
+        if (datagramSocket == null) {
+            final UDPServerSocket udpServerSocket = UDPUtil.replaceUDPServerSocket(this);
+            if (udpServerSocket != null) {
+                Logger.logDebug(String.format("Closed \"%s\" on port %d", udpServerSocket, port));
+            }
+            datagramSocket = new DatagramSocket(port);
+        }
+    }
+    
     @Override
     public void closeIntern() throws Exception {
         datagramSocket.close();
+        UDPUtil.removeUDPServerSocket(this);
         pipedStream.closeWithoutException();
         pipedStreams.values().forEach(PipedStream::closeWithoutException);
     }
@@ -112,9 +123,6 @@ public class UDPServerSocket implements Closeable, Resettable, Startable, Stoppa
     public boolean reset() throws Exception {
         pipedStreams.values().forEach(PipedStream::resetWithoutException);
         pipedStream.resetWithoutException();
-        if (datagramSocket == null) {
-            datagramSocket = new DatagramSocket(port);
-        }
         return true;
     }
     
@@ -125,6 +133,7 @@ public class UDPServerSocket implements Closeable, Resettable, Startable, Stoppa
         }
         stopped.set(false);
         resetWithoutException();
+        initDatagramSocket();
         thread = new Thread(() -> {
             try {
                 final byte[] buffer = new byte[bufferSize];
