@@ -16,5 +16,59 @@
 
 package de.codemakers.net.wrapper;
 
-public class AbstractClient {
+import de.codemakers.base.util.tough.ToughFunction;
+import de.codemakers.net.entities.NetEndpoint;
+import de.codemakers.net.wrapper.sockets.test2.AbstractSocket;
+
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Objects;
+
+public abstract class AbstractClient<S extends AbstractSocket> {
+    
+    private final S socket;
+    
+    public AbstractClient(S socket) {
+        this.socket = Objects.requireNonNull(socket, "socket");
+    }
+    
+    public S getSocket() {
+        return socket;
+    }
+    
+    public NetEndpoint getNetEndpoint() {
+        return socket.getNetEndpoint();
+    }
+    
+    public <T extends OutputStream> T getOutputStream(Class<T> clazz) {
+        return (T) socket.getOutputStream(clazz);
+    }
+    
+    public <T extends OutputStream> T getOutputStream() {
+        return (T) socket.getOutputStream();
+    }
+    
+    public AbstractClient processOutputStream(ToughFunction<OutputStream, OutputStream> toughFunction) {
+        socket.processOutputStream(toughFunction);
+        return this;
+    }
+    
+    public <T extends InputStream> T getInputStream(Class<T> clazz) {
+        return (T) socket.getInputStream(clazz);
+    }
+    
+    public <T extends InputStream> T getInputStream() {
+        return (T) socket.getInputStream();
+    }
+    
+    public AbstractClient processInputStream(ToughFunction<InputStream, InputStream> toughFunction) {
+        socket.processInputStream(toughFunction);
+        return this;
+    }
+    
+    @Override
+    public String toString() {
+        return "AbstractClient{" + "socket=" + socket + '}';
+    }
+    
 }

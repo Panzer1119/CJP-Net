@@ -16,45 +16,48 @@
 
 package de.codemakers.net.wrapper;
 
-import de.codemakers.base.exceptions.CJPNullPointerException;
-import de.codemakers.net.events.SocketAcceptedEvent;
-import de.codemakers.net.wrapper.sockets.AdvancedServerSocket;
+import de.codemakers.net.wrapper.sockets.test2.AbstractSocket;
+import de.codemakers.net.wrapper.sockets.test2.server.DefaultServerSocket;
 
-import java.net.ServerSocket;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public abstract class AbstractServer extends AdvancedServerSocket {
+public abstract class AbstractServer<S extends AbstractSocket, SS extends DefaultServerSocket<S>, C extends AbstractClient<S>> {
     
-    private final List<AbstractClient> clients = new CopyOnWriteArrayList<>();
+    protected final SS serverSocket;
+    protected final List<C> clients = new CopyOnWriteArrayList<>();
     
-    public AbstractServer(ServerSocket serverSocket) {
-        super(serverSocket);
+    public AbstractServer(SS serverSocket) {
+        this.serverSocket = Objects.requireNonNull(serverSocket, "serverSocket");
         init();
     }
     
-    public AbstractServer(int port) {
-        super(port);
-        init();
+    public SS getServerSocket() {
+        return serverSocket;
     }
     
-    private final void init() {
-        addEventListener(SocketAcceptedEvent.class, (socketAcceptedEvent) -> {
-            if (socketAcceptedEvent == null) {
-                throw new CJPNullPointerException("SocketAcceptedEvent may not be null");
-            }
-            final AbstractClient client = processSocket(socketAcceptedEvent);
+    public List<C> getClients() {
+        return clients;
+    }
+    
+    private void init() {
+        serverSocket.addListener((socket) -> {
+            final C client = processSocket(socket);
             if (client != null) {
                 clients.add(client);
+                onClient(client);
             }
-            return false;
         });
     }
     
-    abstract AbstractClient processSocket(SocketAcceptedEvent socketAcceptedEvent);
+    protected abstract void onClient(C client) throws Exception;
     
-    public final List<AbstractClient> getClients() {
-        return clients;
+    protected abstract C processSocket(S socket) throws Exception;
+    
+    @Override
+    public String toString() {
+        return "AbstractServer{" + "serverSocket=" + serverSocket + ", clients=" + clients + '}';
     }
     
 }
