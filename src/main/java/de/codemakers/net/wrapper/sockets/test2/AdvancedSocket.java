@@ -84,7 +84,7 @@ public class AdvancedSocket extends AbstractSocket<AdvancedSocket> implements Cl
         return this;
     }
     
-    protected AdvancedSocket error(Throwable error) {
+    public AdvancedSocket error(Throwable error) {
         setErrored(true);
         setError(error);
         setLocalCloseRequested(false);

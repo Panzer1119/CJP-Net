@@ -24,13 +24,15 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
-public abstract class AdvancedServerSocket extends AbstractServerSocket implements Closeable, Startable, Stoppable {
+public abstract class AdvancedServerSocket extends AbstractServerSocket<AdvancedServerSocket> implements Closeable, Startable, Stoppable {
     
-    protected volatile boolean started = false;
-    protected volatile boolean stopRequested = false;
-    protected volatile boolean isErrored = false;
-    protected volatile Throwable error = null;
+    protected final AtomicBoolean started = new AtomicBoolean(false);
+    protected final AtomicBoolean stopRequested = new AtomicBoolean(false);
+    protected final AtomicBoolean errored = new AtomicBoolean(false);
+    protected final AtomicReference<Throwable> error = new AtomicReference<>(null);
     
     public AdvancedServerSocket(int port) {
         super(port);
@@ -41,31 +43,51 @@ public abstract class AdvancedServerSocket extends AbstractServerSocket implemen
     }
     
     public boolean isStarted() {
-        return started && !isErrored;
+        return started.get(); //FIXME What is if isErrored is true? return false then?
+    }
+    
+    protected AdvancedServerSocket setStarted(boolean started) {
+        this.started.set(started);
+        return this;
     }
     
     public boolean isStopRequested() {
-        return stopRequested;
+        return stopRequested.get();
+    }
+    
+    protected AdvancedServerSocket setStopRequested(boolean stopRequested) {
+        this.stopRequested.set(stopRequested);
+        return this;
     }
     
     public boolean isErrored() {
-        return isErrored;
+        return errored.get();
+    }
+    
+    protected AdvancedServerSocket setErrored(boolean errored) {
+        this.errored.set(errored);
+        return this;
     }
     
     public Throwable getError() {
-        return error;
+        return error.get();
+    }
+    
+    protected AdvancedServerSocket setError(Throwable error) {
+        this.error.set(error);
+        return this;
     }
     
     public AdvancedServerSocket error(Throwable error) {
-        this.isErrored = true;
-        this.error = error;
-        this.stopRequested = false;
+        setErrored(true);
+        setError(error);
+        setStopRequested(false);
         return this;
     }
     
     public AdvancedServerSocket resetError() {
-        isErrored = false;
-        error = null;
+        setErrored(false);
+        setError(null);
         return this;
     }
     
@@ -74,12 +96,12 @@ public abstract class AdvancedServerSocket extends AbstractServerSocket implemen
     protected abstract boolean onStop() throws Exception;
     
     @Override
-    public AbstractServerSocket setServerSocket(ServerSocket serverSocket) {
+    public AdvancedServerSocket setServerSocket(ServerSocket serverSocket) {
         Objects.requireNonNull(serverSocket);
         setPort(serverSocket.getLocalPort());
         this.serverSocket = serverSocket;
         resetError();
-        started = serverSocket.isBound() && !serverSocket.isClosed();
+        setStarted(serverSocket.isBound() && !serverSocket.isClosed());
         try {
             onStart(isStarted());
         } catch (Exception ex) {
@@ -99,10 +121,10 @@ public abstract class AdvancedServerSocket extends AbstractServerSocket implemen
             return false;
         }
         closeIntern();
-        stopRequested = false;
+        setStopRequested(false);
         serverSocket = createServerSocket();
         resetError();
-        started = serverSocket != null && serverSocket.isBound() && !serverSocket.isClosed();
+        setStarted(serverSocket != null && serverSocket.isBound() && !serverSocket.isClosed());
         return onStart(isStarted());
     }
     
@@ -111,7 +133,7 @@ public abstract class AdvancedServerSocket extends AbstractServerSocket implemen
         if (!isStarted()) {
             return false;
         }
-        stopRequested = true;
+        setStopRequested(true);
         onStop();
         closeIntern();
         return true;
@@ -124,15 +146,20 @@ public abstract class AdvancedServerSocket extends AbstractServerSocket implemen
     
     @Override
     public void close() throws IOException {
-        if (serverSocket != null) {
-            serverSocket.close();
+        try {
+            if (serverSocket != null) {
+                serverSocket.close();
+            }
+            setStarted(false);
+        } catch (Exception ex) {
+            setStarted(false);
+            throw new IOException(ex);
         }
-        started = false;
     }
     
     @Override
     public String toString() {
-        return "AdvancedServerSocket{" + "started=" + started + ", stopRequested=" + stopRequested + ", isErrored=" + isErrored + ", error=" + error + ", port=" + port + ", serverSocket=" + serverSocket + '}';
+        return "AdvancedServerSocket{" + "started=" + started + ", stopRequested=" + stopRequested + ", errored=" + errored + ", error=" + error + ", port=" + port + ", serverSocket=" + serverSocket + '}';
     }
     
 }
