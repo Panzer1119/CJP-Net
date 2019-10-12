@@ -23,8 +23,8 @@ import java.util.Objects;
 
 public class NetEndpoint extends AbstractEndpoint {
     
-    protected final InetAddress inetAddress;
-    protected final int port;
+    protected InetAddress inetAddress;
+    protected int port;
     
     public NetEndpoint(InetAddress inetAddress, int port) {
         this.inetAddress = inetAddress;
@@ -41,22 +41,32 @@ public class NetEndpoint extends AbstractEndpoint {
         return inetAddress;
     }
     
+    public NetEndpoint setInetAddress(InetAddress inetAddress) {
+        this.inetAddress = inetAddress;
+        return this;
+    }
+    
     public int getPort() {
         return port;
     }
     
+    public NetEndpoint setPort(int port) {
+        this.port = port;
+        return this;
+    }
+    
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (other == null || getClass() != other.getClass()) {
             return false;
         }
-        if (id != 0 && !super.equals(o)) {
+        if (id != 0 && !super.equals(other)) {
             return false;
         }
-        final NetEndpoint that = (NetEndpoint) o;
+        final NetEndpoint that = (NetEndpoint) other;
         return port == that.port && Objects.equals(inetAddress, that.inetAddress);
     }
     
