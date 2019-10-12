@@ -26,8 +26,7 @@ import java.net.Socket;
 
 public abstract class AbstractSocket {
     
-    protected InetAddress inetAddress = null;
-    protected int port = -1;
+    protected final NetEndpoint netEndpoint = new NetEndpoint(null, -1);
     protected Socket socket = null;
     protected OutputStream outputStream = null;
     protected InputStream inputStream = null;
@@ -43,20 +42,20 @@ public abstract class AbstractSocket {
     }
     
     public InetAddress getInetAddress() {
-        return inetAddress;
+        return netEndpoint.getInetAddress();
     }
     
     public AbstractSocket setInetAddress(InetAddress inetAddress) {
-        this.inetAddress = inetAddress;
+        netEndpoint.setInetAddress(inetAddress);
         return this;
     }
     
     public int getPort() {
-        return port;
+        return netEndpoint.getPort();
     }
     
     public AbstractSocket setPort(int port) {
-        this.port = port;
+        netEndpoint.setPort(port);
         return this;
     }
     
@@ -64,8 +63,8 @@ public abstract class AbstractSocket {
         return socket;
     }
     
-    public NetEndpoint toNetEndpoint() {
-        return new NetEndpoint(inetAddress, port);
+    public NetEndpoint getNetEndpoint() {
+        return netEndpoint;
     }
     
     public abstract AbstractSocket setSocket(Socket socket);
@@ -80,9 +79,9 @@ public abstract class AbstractSocket {
         return (T) outputStream;
     }
     
-    public AbstractSocket processOutputStream(ToughFunction<OutputStream, OutputStream> function) {
-        if (function != null) {
-            final OutputStream outputStream = function.applyWithoutException(this.outputStream);
+    public AbstractSocket processOutputStream(ToughFunction<OutputStream, OutputStream> toughFunction) {
+        if (toughFunction != null) {
+            final OutputStream outputStream = toughFunction.applyWithoutException(this.outputStream);
             if (outputStream != null) {
                 this.outputStream = outputStream;
             }
@@ -98,9 +97,9 @@ public abstract class AbstractSocket {
         return (T) inputStream;
     }
     
-    public AbstractSocket processInputStream(ToughFunction<InputStream, InputStream> function) {
-        if (function != null) {
-            final InputStream inputStream = function.applyWithoutException(this.inputStream);
+    public AbstractSocket processInputStream(ToughFunction<InputStream, InputStream> toughFunction) {
+        if (toughFunction != null) {
+            final InputStream inputStream = toughFunction.applyWithoutException(this.inputStream);
             if (inputStream != null) {
                 this.inputStream = inputStream;
             }
@@ -110,7 +109,7 @@ public abstract class AbstractSocket {
     
     @Override
     public String toString() {
-        return "AbstractSocket{" + "inetAddress=" + inetAddress + ", port=" + port + ", socket=" + socket + ", outputStream=" + outputStream + ", inputStream=" + inputStream + '}';
+        return "AbstractSocket{" + "netEndpoint=" + netEndpoint + ", socket=" + socket + ", outputStream=" + outputStream + ", inputStream=" + inputStream + '}';
     }
     
 }
