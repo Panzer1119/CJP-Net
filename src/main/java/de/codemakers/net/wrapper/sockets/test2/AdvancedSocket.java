@@ -25,13 +25,15 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
-public class AdvancedSocket extends AbstractSocket implements Closeable, Connectable, Disconnectable {
+public class AdvancedSocket extends AbstractSocket<AdvancedSocket> implements Closeable, Connectable, Disconnectable {
     
-    protected volatile boolean connected = false;
-    protected volatile boolean localCloseRequested = false;
-    protected volatile boolean isErrored = false;
-    protected volatile Throwable error = null;
+    protected final AtomicBoolean connected = new AtomicBoolean(false);
+    protected final AtomicBoolean localCloseRequested = new AtomicBoolean(false);
+    protected final AtomicBoolean isErrored = new AtomicBoolean(false);
+    protected final AtomicReference<Throwable> error = new AtomicReference<>(null);
     
     public AdvancedSocket(InetAddress inetAddress, int port) {
         super(inetAddress, port);
@@ -42,31 +44,51 @@ public class AdvancedSocket extends AbstractSocket implements Closeable, Connect
     }
     
     public boolean isConnected() {
-        return connected && !isErrored;
+        return connected.get(); //FIXME What is if isErrored is true? return false then?
+    }
+    
+    protected AdvancedSocket setConnected(boolean connected) {
+        this.connected.set(connected);
+        return this;
     }
     
     public boolean isLocalCloseRequested() {
-        return localCloseRequested;
+        return localCloseRequested.get();
+    }
+    
+    protected AdvancedSocket setLocalCloseRequested(boolean localCloseRequested) {
+        this.localCloseRequested.set(localCloseRequested);
+        return this;
     }
     
     public boolean isErrored() {
-        return isErrored;
+        return isErrored.get();
+    }
+    
+    protected AdvancedSocket setIsErrored(boolean isErrored) {
+        this.isErrored.set(isErrored);
+        return this;
     }
     
     public Throwable getError() {
-        return error;
+        return error.get();
+    }
+    
+    protected AdvancedSocket setError(Throwable error) {
+        this.error.set(error);
+        return this;
     }
     
     protected AdvancedSocket error(Throwable error) {
-        this.isErrored = true;
-        this.error = error;
-        this.localCloseRequested = false;
+        setIsErrored(true);
+        setError(error);
+        setLocalCloseRequested(false);
         return this;
     }
     
     public AdvancedSocket resetError() {
-        isErrored = false;
-        error = null;
+        setIsErrored(false);
+        setError(null);
         return this;
     }
     
@@ -85,7 +107,7 @@ public class AdvancedSocket extends AbstractSocket implements Closeable, Connect
         setPort(socket.getPort());
         this.socket = socket;
         resetError();
-        connected = socket.isConnected() && !socket.isClosed();
+        setConnected(socket.isConnected() && !socket.isClosed());
         final boolean successful = isConnected();
         try {
             if (successful) {
@@ -105,7 +127,7 @@ public class AdvancedSocket extends AbstractSocket implements Closeable, Connect
     
     @Override
     protected Socket createSocket() throws Exception {
-        return new Socket(inetAddress, port);
+        return new Socket(getInetAddress(), getPort());
     }
     
     @Override
@@ -114,13 +136,13 @@ public class AdvancedSocket extends AbstractSocket implements Closeable, Connect
             return false;
         }
         closeIntern();
-        localCloseRequested = false;
+        setLocalCloseRequested(false);
         if (reconnect) {
             socket = null;
         }
         socket = createSocket();
         resetError();
-        connected = socket != null && socket.isConnected() && !socket.isClosed();
+        setConnected(socket != null && socket.isConnected() && !socket.isClosed());
         final boolean successful = isConnected();
         if (successful) {
             outputStream = socket.getOutputStream();
@@ -134,7 +156,7 @@ public class AdvancedSocket extends AbstractSocket implements Closeable, Connect
         if (!isConnected()) {
             return false;
         }
-        localCloseRequested = true;
+        setLocalCloseRequested(true);
         onDisconnection();
         closeIntern();
         return true;
@@ -149,21 +171,26 @@ public class AdvancedSocket extends AbstractSocket implements Closeable, Connect
     
     @Override
     public void close() throws IOException {
-        if (outputStream != null) {
-            outputStream.close();
+        try {
+            if (outputStream != null) {
+                outputStream.close();
+            }
+            if (inputStream != null) {
+                inputStream.close();
+            }
+            if (socket != null) {
+                socket.close();
+            }
+            setConnected(false);
+        } catch (Exception ex) {
+            setConnected(false);
+            throw new IOException(ex);
         }
-        if (inputStream != null) {
-            inputStream.close();
-        }
-        if (socket != null) {
-            socket.close();
-        }
-        connected = false;
     }
     
     @Override
     public String toString() {
-        return "AdvancedSocket{" + "connected=" + connected + ", localCloseRequested=" + localCloseRequested + ", isErrored=" + isErrored + ", error=" + error + ", inetAddress=" + inetAddress + ", port=" + port + ", socket=" + socket + ", outputStream=" + outputStream + ", inputStream=" + inputStream + '}';
+        return "AdvancedSocket{" + "connected=" + connected + ", localCloseRequested=" + localCloseRequested + ", isErrored=" + isErrored + ", error=" + error + ", netEndpoint=" + netEndpoint + ", socket=" + socket + ", outputStream=" + outputStream + ", inputStream=" + inputStream + '}';
     }
     
 }
