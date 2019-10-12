@@ -28,6 +28,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.util.List;
 
+@Deprecated
 public class AdvancedSocket extends AbstractSocket implements IEventHandler<NetEvent> {
     
     private final EventHandler<NetEvent> netEventHandler = new EventHandler<>();

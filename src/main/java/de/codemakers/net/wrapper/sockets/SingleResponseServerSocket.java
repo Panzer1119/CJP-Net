@@ -29,6 +29,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.atomic.AtomicLong;
 
+@Deprecated
 public abstract class SingleResponseServerSocket extends AbstractServerSocket {
     
     protected final CJP cjp;

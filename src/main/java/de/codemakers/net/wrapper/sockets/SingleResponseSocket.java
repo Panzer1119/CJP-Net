@@ -32,6 +32,7 @@ import java.net.Socket;
 import java.util.Objects;
 import java.util.concurrent.Future;
 
+@Deprecated
 public class SingleResponseSocket extends AbstractSocket {
     
     protected final CJP cjp;

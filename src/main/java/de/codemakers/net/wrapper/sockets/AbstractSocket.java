@@ -32,6 +32,7 @@ import java.net.*;
 import java.nio.channels.AlreadyBoundException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@Deprecated
 public abstract class AbstractSocket implements Closeable, Connectable, Disconnectable, Startable, Stoppable {
     
     private InetAddress inetAddress = null;

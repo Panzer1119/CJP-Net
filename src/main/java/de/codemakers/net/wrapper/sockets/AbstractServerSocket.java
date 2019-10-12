@@ -29,6 +29,7 @@ import java.net.SocketException;
 import java.nio.channels.AlreadyBoundException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@Deprecated
 public abstract class AbstractServerSocket implements Closeable, Startable, Stoppable {
     
     private int port = -1;

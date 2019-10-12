@@ -19,6 +19,7 @@ package de.codemakers.net.wrapper.sockets;
 import de.codemakers.base.logger.Logger;
 import de.codemakers.base.util.tough.ToughConsumer;
 
+@Deprecated
 public interface ISocket {
     
     boolean send(Object object) throws Exception;

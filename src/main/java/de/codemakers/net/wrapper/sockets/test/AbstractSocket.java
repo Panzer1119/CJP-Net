@@ -29,6 +29,7 @@ import java.net.Socket;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@Deprecated
 public abstract class AbstractSocket implements Closeable, Connectable, Disconnectable {
     
     protected InetAddress inetAddress;

@@ -32,6 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+@Deprecated
 public abstract class RespondableAdvancedSocket extends AdvancedSocket {
     
     private final Map<Long, ResponseEvent> requestedResponses = new ConcurrentHashMap<>();
