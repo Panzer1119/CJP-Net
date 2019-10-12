@@ -33,7 +33,7 @@ public class AdvancedSocket extends AbstractSocket<AdvancedSocket> implements Cl
     
     protected final AtomicBoolean connected = new AtomicBoolean(false);
     protected final AtomicBoolean localCloseRequested = new AtomicBoolean(false);
-    protected final AtomicBoolean isErrored = new AtomicBoolean(false);
+    protected final AtomicBoolean errored = new AtomicBoolean(false);
     protected final AtomicReference<Throwable> error = new AtomicReference<>(null);
     
     public AdvancedSocket(InetAddress inetAddress, int port) {
@@ -67,11 +67,11 @@ public class AdvancedSocket extends AbstractSocket<AdvancedSocket> implements Cl
     }
     
     public boolean isErrored() {
-        return isErrored.get();
+        return errored.get();
     }
     
-    protected AdvancedSocket setIsErrored(boolean isErrored) {
-        this.isErrored.set(isErrored);
+    protected AdvancedSocket setErrored(boolean errored) {
+        this.errored.set(errored);
         return this;
     }
     
@@ -85,14 +85,14 @@ public class AdvancedSocket extends AbstractSocket<AdvancedSocket> implements Cl
     }
     
     protected AdvancedSocket error(Throwable error) {
-        setIsErrored(true);
+        setErrored(true);
         setError(error);
         setLocalCloseRequested(false);
         return this;
     }
     
     public AdvancedSocket resetError() {
-        setIsErrored(false);
+        setErrored(false);
         setError(null);
         return this;
     }
@@ -195,7 +195,7 @@ public class AdvancedSocket extends AbstractSocket<AdvancedSocket> implements Cl
     
     @Override
     public String toString() {
-        return "AdvancedSocket{" + "connected=" + connected + ", localCloseRequested=" + localCloseRequested + ", isErrored=" + isErrored + ", error=" + error + ", netEndpoint=" + netEndpoint + ", socket=" + socket + ", outputStream=" + outputStream + ", inputStream=" + inputStream + '}';
+        return "AdvancedSocket{" + "connected=" + connected + ", localCloseRequested=" + localCloseRequested + ", errored=" + errored + ", error=" + error + ", netEndpoint=" + netEndpoint + ", socket=" + socket + ", outputStream=" + outputStream + ", inputStream=" + inputStream + '}';
     }
     
 }
