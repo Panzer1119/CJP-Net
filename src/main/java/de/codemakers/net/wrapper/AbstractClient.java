@@ -26,7 +26,7 @@ import java.util.Objects;
 
 public abstract class AbstractClient<S extends AbstractSocket> {
     
-    private final S socket;
+    protected final S socket;
     
     public AbstractClient(S socket) {
         this.socket = Objects.requireNonNull(socket, "socket");

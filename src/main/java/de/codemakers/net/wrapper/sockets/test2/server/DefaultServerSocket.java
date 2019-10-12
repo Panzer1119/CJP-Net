@@ -60,6 +60,10 @@ public class DefaultServerSocket<S extends AbstractSocket> extends ProcessingSer
         return this;
     }
     
+    public ToughFunction<Socket, S> getSocketConverter() {
+        return socketConverter;
+    }
+    
     @Override
     protected void onSocket(S socket) throws Exception {
         listeners.forEach((toughConsumer) -> toughConsumer.acceptWithoutException(socket));
