@@ -16,6 +16,7 @@
 
 package de.codemakers.net.wrapper.sockets.test2.server;
 
+import de.codemakers.base.CJP;
 import de.codemakers.base.Standard;
 import de.codemakers.base.util.tough.ToughRunnable;
 import de.codemakers.net.wrapper.sockets.test2.AbstractSocket;
@@ -27,6 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class ProcessingServerSocket<S extends AbstractSocket> extends AdvancedServerSocket<ProcessingServerSocket<S>> {
     
     protected final AtomicReference<Thread> thread = new AtomicReference<>(null);
+    protected CJP cjp = CJP.getInstance();
     
     public ProcessingServerSocket(int port) {
         super(port);
@@ -50,15 +52,33 @@ public abstract class ProcessingServerSocket<S extends AbstractSocket> extends A
         return thread != null && thread.isAlive() && !thread.isInterrupted();
     }
     
-    protected abstract S onSocket(Socket socket) throws Exception;
+    protected abstract void onSocket(S socket) throws Exception;
     
-    protected abstract ToughRunnable createSocketProcessor(ServerSocket serverSocket);
+    protected abstract S processSocket(Socket socket) throws Exception;
+    
+    private ToughRunnable createThread(ServerSocket serverSocket) {
+        return () -> {
+            while (isRunning() && !isErrored()) { //TODO ...
+                final Socket socket = serverSocket.accept();
+                cjp.getFixedExecutorService().submit(() -> {
+                    try {
+                        final S s = processSocket(socket);
+                        if (s != null) {
+                            onSocket(s);
+                        }
+                    } catch (Exception ex) {
+                        error(ex);
+                    }
+                });
+            }
+        };
+    }
     
     public boolean initSocketProcessor() {
         if (isRunning()) {
             return false;
         }
-        setThread(Standard.toughThread(() -> createSocketProcessor(getServerSocket()).run(this::error)));
+        setThread(Standard.toughThread(() -> createThread(getServerSocket()).run(this::error)));
         return getThread() != null;
     }
     
