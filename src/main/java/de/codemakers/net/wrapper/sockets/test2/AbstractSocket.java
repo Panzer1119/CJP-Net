@@ -24,7 +24,7 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 
-public abstract class AbstractSocket {
+public abstract class AbstractSocket<THIS> {
     
     protected final NetEndpoint netEndpoint = new NetEndpoint(null, -1);
     protected Socket socket = null;
@@ -36,6 +36,10 @@ public abstract class AbstractSocket {
         setPort(port);
     }
     
+    public AbstractSocket(NetEndpoint netEndpoint) {
+        setFromEndpoint(netEndpoint);
+    }
+    
     public AbstractSocket(Socket socket) {
         this(socket.getInetAddress(), socket.getPort());
         setSocket(socket);
@@ -45,29 +49,35 @@ public abstract class AbstractSocket {
         return netEndpoint.getInetAddress();
     }
     
-    public AbstractSocket setInetAddress(InetAddress inetAddress) {
+    public THIS setInetAddress(InetAddress inetAddress) {
         netEndpoint.setInetAddress(inetAddress);
-        return this;
+        return (THIS) this;
     }
     
     public int getPort() {
         return netEndpoint.getPort();
     }
     
-    public AbstractSocket setPort(int port) {
+    public THIS setPort(int port) {
         netEndpoint.setPort(port);
-        return this;
-    }
-    
-    public Socket getSocket() {
-        return socket;
+        return (THIS) this;
     }
     
     public NetEndpoint getNetEndpoint() {
         return netEndpoint;
     }
     
-    public abstract AbstractSocket setSocket(Socket socket);
+    public THIS setFromEndpoint(NetEndpoint netEndpoint) {
+        setInetAddress(netEndpoint.getInetAddress());
+        setPort(netEndpoint.getPort());
+        return (THIS) this;
+    }
+    
+    public Socket getSocket() {
+        return socket;
+    }
+    
+    public abstract THIS setSocket(Socket socket);
     
     protected abstract Socket createSocket() throws Exception;
     
@@ -79,14 +89,14 @@ public abstract class AbstractSocket {
         return (T) outputStream;
     }
     
-    public AbstractSocket processOutputStream(ToughFunction<OutputStream, OutputStream> toughFunction) {
+    public THIS processOutputStream(ToughFunction<OutputStream, OutputStream> toughFunction) {
         if (toughFunction != null) {
             final OutputStream outputStream = toughFunction.applyWithoutException(this.outputStream);
             if (outputStream != null) {
                 this.outputStream = outputStream;
             }
         }
-        return this;
+        return (THIS) this;
     }
     
     public <T extends InputStream> T getInputStream(Class<T> clazz) {
@@ -97,14 +107,14 @@ public abstract class AbstractSocket {
         return (T) inputStream;
     }
     
-    public AbstractSocket processInputStream(ToughFunction<InputStream, InputStream> toughFunction) {
+    public THIS processInputStream(ToughFunction<InputStream, InputStream> toughFunction) {
         if (toughFunction != null) {
             final InputStream inputStream = toughFunction.applyWithoutException(this.inputStream);
             if (inputStream != null) {
                 this.inputStream = inputStream;
             }
         }
-        return this;
+        return (THIS) this;
     }
     
     @Override
