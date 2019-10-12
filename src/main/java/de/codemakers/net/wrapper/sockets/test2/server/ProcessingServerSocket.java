@@ -16,15 +16,17 @@
 
 package de.codemakers.net.wrapper.sockets.test2.server;
 
+import de.codemakers.base.Standard;
 import de.codemakers.base.util.tough.ToughRunnable;
 import de.codemakers.net.wrapper.sockets.test2.AbstractSocket;
 
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class ProcessingServerSocket<S extends AbstractSocket> extends AdvancedServerSocket {
     
-    protected volatile Thread thread = null;
+    protected final AtomicReference<Thread> thread = new AtomicReference<>(null);
     
     public ProcessingServerSocket(int port) {
         super(port);
@@ -34,8 +36,18 @@ public abstract class ProcessingServerSocket<S extends AbstractSocket> extends A
         super(serverSocket);
     }
     
+    protected Thread getThread() {
+        return thread.get();
+    }
+    
+    private ProcessingServerSocket setThread(Thread thread) {
+        this.thread.set(thread);
+        return this;
+    }
+    
     public boolean isRunning() {
-        return thread != null && thread.isAlive();
+        final Thread thread = getThread();
+        return thread != null && thread.isAlive() && !thread.isInterrupted();
     }
     
     protected abstract S onSocket(Socket socket) throws Exception;
@@ -46,8 +58,8 @@ public abstract class ProcessingServerSocket<S extends AbstractSocket> extends A
         if (isRunning()) {
             return false;
         }
-        thread = new Thread(() -> createSocketProcessor(getServerSocket()).run(this::error));
-        return thread != null;
+        setThread(Standard.toughThread(() -> createSocketProcessor(getServerSocket()).run(this::error)));
+        return getThread() != null;
     }
     
     @Override
@@ -58,7 +70,7 @@ public abstract class ProcessingServerSocket<S extends AbstractSocket> extends A
         if (!initSocketProcessor()) {
             return false;
         }
-        thread.start();
+        getThread().start();
         return isRunning();
     }
     
@@ -67,16 +79,16 @@ public abstract class ProcessingServerSocket<S extends AbstractSocket> extends A
         if (!isRunning()) {
             return false;
         }
-        if (thread != null) {
-            thread.interrupt();
+        if (getThread() != null) {
+            getThread().interrupt(); //FIXME Hmmm?
         }
-        thread = null; //TODO Is this good?
+        setThread(null); //TODO Is this good?
         return !isRunning();
     }
     
     @Override
     public String toString() {
-        return "ProcessingServerSocket{" + "thread=" + thread + ", started=" + started + ", stopRequested=" + stopRequested + ", isErrored=" + isErrored + ", error=" + error + ", port=" + port + ", serverSocket=" + serverSocket + '}';
+        return "ProcessingServerSocket{" + "thread=" + thread + ", started=" + started + ", stopRequested=" + stopRequested + ", errored=" + errored + ", error=" + error + ", port=" + port + ", serverSocket=" + serverSocket + '}';
     }
     
 }
