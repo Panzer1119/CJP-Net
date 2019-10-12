@@ -135,7 +135,7 @@ public abstract class ProcessingSocket<I extends InputStream, O extends OutputSt
     
     @Override
     public String toString() {
-        return "ProcessingSocket{" + "stopRequested=" + stopRequested + ", thread=" + thread + ", connected=" + connected + ", localCloseRequested=" + localCloseRequested + ", isErrored=" + isErrored + ", error=" + error + ", netEndpoint=" + netEndpoint + ", socket=" + socket + ", outputStream=" + outputStream + ", inputStream=" + inputStream + '}';
+        return "ProcessingSocket{" + "stopRequested=" + stopRequested + ", thread=" + thread + ", connected=" + connected + ", localCloseRequested=" + localCloseRequested + ", errored=" + errored + ", error=" + error + ", netEndpoint=" + netEndpoint + ", socket=" + socket + ", outputStream=" + outputStream + ", inputStream=" + inputStream + '}';
     }
     
 }
