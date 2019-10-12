@@ -27,7 +27,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-public abstract class AdvancedServerSocket extends AbstractServerSocket<AdvancedServerSocket> implements Closeable, Startable, Stoppable {
+public abstract class AdvancedServerSocket<THIS> extends AbstractServerSocket<THIS> implements Closeable, Startable, Stoppable {
     
     protected final AtomicBoolean started = new AtomicBoolean(false);
     protected final AtomicBoolean stopRequested = new AtomicBoolean(false);
@@ -55,40 +55,40 @@ public abstract class AdvancedServerSocket extends AbstractServerSocket<Advanced
         return stopRequested.get();
     }
     
-    protected AdvancedServerSocket setStopRequested(boolean stopRequested) {
+    protected THIS setStopRequested(boolean stopRequested) {
         this.stopRequested.set(stopRequested);
-        return this;
+        return (THIS) this;
     }
     
     public boolean isErrored() {
         return errored.get();
     }
     
-    protected AdvancedServerSocket setErrored(boolean errored) {
+    protected THIS setErrored(boolean errored) {
         this.errored.set(errored);
-        return this;
+        return (THIS) this;
     }
     
     public Throwable getError() {
         return error.get();
     }
     
-    protected AdvancedServerSocket setError(Throwable error) {
+    protected THIS setError(Throwable error) {
         this.error.set(error);
-        return this;
+        return (THIS) this;
     }
     
-    public AdvancedServerSocket error(Throwable error) {
+    public THIS error(Throwable error) {
         setErrored(true);
         setError(error);
         setStopRequested(false);
-        return this;
+        return (THIS) this;
     }
     
-    public AdvancedServerSocket resetError() {
+    public THIS resetError() {
         setErrored(false);
         setError(null);
-        return this;
+        return (THIS) this;
     }
     
     protected abstract boolean onStart(boolean successful) throws Exception;
@@ -96,7 +96,7 @@ public abstract class AdvancedServerSocket extends AbstractServerSocket<Advanced
     protected abstract boolean onStop() throws Exception;
     
     @Override
-    public AdvancedServerSocket setServerSocket(ServerSocket serverSocket) {
+    public THIS setServerSocket(ServerSocket serverSocket) {
         Objects.requireNonNull(serverSocket);
         setPort(serverSocket.getLocalPort());
         this.serverSocket = serverSocket;
@@ -107,7 +107,7 @@ public abstract class AdvancedServerSocket extends AbstractServerSocket<Advanced
         } catch (Exception ex) {
             throw new NetRuntimeException(ex);
         }
-        return null;
+        return (THIS) this;
     }
     
     @Override

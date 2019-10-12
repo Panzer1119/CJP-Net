@@ -24,7 +24,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.atomic.AtomicReference;
 
-public abstract class ProcessingServerSocket<S extends AbstractSocket> extends AdvancedServerSocket {
+public abstract class ProcessingServerSocket<S extends AbstractSocket> extends AdvancedServerSocket<ProcessingServerSocket<S>> {
     
     protected final AtomicReference<Thread> thread = new AtomicReference<>(null);
     
