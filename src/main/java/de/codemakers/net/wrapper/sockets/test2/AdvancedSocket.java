@@ -18,6 +18,7 @@ package de.codemakers.net.wrapper.sockets.test2;
 
 import de.codemakers.base.util.interfaces.Connectable;
 import de.codemakers.base.util.interfaces.Disconnectable;
+import de.codemakers.net.entities.NetEndpoint;
 import de.codemakers.net.exceptions.NetRuntimeException;
 
 import java.io.Closeable;
@@ -37,6 +38,10 @@ public class AdvancedSocket extends AbstractSocket<AdvancedSocket> implements Cl
     
     public AdvancedSocket(InetAddress inetAddress, int port) {
         super(inetAddress, port);
+    }
+    
+    public AdvancedSocket(NetEndpoint netEndpoint) {
+        super(netEndpoint);
     }
     
     public AdvancedSocket(Socket socket) {

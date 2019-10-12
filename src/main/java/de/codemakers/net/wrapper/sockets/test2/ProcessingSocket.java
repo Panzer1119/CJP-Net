@@ -16,34 +16,57 @@
 
 package de.codemakers.net.wrapper.sockets.test2;
 
+import de.codemakers.base.Standard;
 import de.codemakers.base.util.interfaces.Startable;
 import de.codemakers.base.util.interfaces.Stoppable;
 import de.codemakers.base.util.tough.ToughRunnable;
+import de.codemakers.net.entities.NetEndpoint;
 
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class ProcessingSocket<I extends InputStream, O extends OutputStream> extends AdvancedSocket implements Startable, Stoppable {
     
-    protected volatile Thread thread = null;
-    protected volatile boolean stopRequested = false;
+    protected final AtomicBoolean stopRequested = new AtomicBoolean(false);
+    protected final AtomicReference<Thread> thread = new AtomicReference<>(null);
     
     public ProcessingSocket(InetAddress inetAddress, int port) {
         super(inetAddress, port);
+    }
+    
+    public ProcessingSocket(NetEndpoint netEndpoint) {
+        super(netEndpoint);
     }
     
     public ProcessingSocket(Socket socket) {
         super(socket);
     }
     
-    public boolean isRunning() {
-        return thread != null && thread.isAlive();
+    public boolean isStopRequested() {
+        return stopRequested.get();
     }
     
-    public boolean isStopRequested() {
-        return stopRequested;
+    protected ProcessingSocket setStopRequested(boolean stopRequested) {
+        this.stopRequested.set(stopRequested);
+        return this;
+    }
+    
+    protected Thread getThread() {
+        return thread.get();
+    }
+    
+    private ProcessingSocket setThread(Thread thread) {
+        this.thread.set(thread);
+        return this;
+    }
+    
+    public boolean isRunning() {
+        final Thread thread = getThread();
+        return thread != null && thread.isAlive() && !thread.isInterrupted();
     }
     
     @Override
@@ -80,8 +103,8 @@ public abstract class ProcessingSocket<I extends InputStream, O extends OutputSt
         if (isRunning()) {
             return false;
         }
-        thread = new Thread(() -> createInputProcessor(getInputStream(), getOutputStream()).run(this::error));
-        return thread != null;
+        setThread(Standard.toughThread(() -> createInputProcessor(getInputStream(), getOutputStream()).run(this::error)));
+        return getThread() != null;
     }
     
     @Override
@@ -89,11 +112,11 @@ public abstract class ProcessingSocket<I extends InputStream, O extends OutputSt
         if (isRunning()) {
             return false;
         }
-        stopRequested = false;
+        setStopRequested(false);
         if (!initInputProcessor()) {
             return false;
         }
-        thread.start();
+        getThread().start();
         return isRunning();
     }
     
@@ -102,17 +125,17 @@ public abstract class ProcessingSocket<I extends InputStream, O extends OutputSt
         if (!isRunning()) {
             return false;
         }
-        stopRequested = true;
-        if (thread != null) {
-            thread.interrupt();
+        setStopRequested(true);
+        if (getThread() != null) {
+            getThread().interrupt(); //FIXME Hmmm?
         }
-        thread = null; //TODO Is this good?
+        setThread(null); //TODO Is this good?
         return !isRunning();
     }
     
     @Override
     public String toString() {
-        return "ProcessingSocket{" + "thread=" + thread + ", stopRequested=" + stopRequested + ", connected=" + connected + ", localCloseRequested=" + localCloseRequested + ", isErrored=" + isErrored + ", error=" + error + ", inetAddress=" + inetAddress + ", port=" + port + ", socket=" + socket + ", outputStream=" + outputStream + ", inputStream=" + inputStream + '}';
+        return "ProcessingSocket{" + "stopRequested=" + stopRequested + ", thread=" + thread + ", connected=" + connected + ", localCloseRequested=" + localCloseRequested + ", isErrored=" + isErrored + ", error=" + error + ", netEndpoint=" + netEndpoint + ", socket=" + socket + ", outputStream=" + outputStream + ", inputStream=" + inputStream + '}';
     }
     
 }
