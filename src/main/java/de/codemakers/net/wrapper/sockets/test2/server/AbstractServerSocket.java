@@ -21,7 +21,7 @@ import de.codemakers.net.entities.NetEndpoint;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 
-public abstract class AbstractServerSocket {
+public abstract class AbstractServerSocket<THIS> {
     
     protected int port = -1;
     protected ServerSocket serverSocket = null;
@@ -39,9 +39,9 @@ public abstract class AbstractServerSocket {
         return port;
     }
     
-    public AbstractServerSocket setPort(int port) {
+    public THIS setPort(int port) {
         this.port = port;
-        return this;
+        return (THIS) this;
     }
     
     public ServerSocket getServerSocket() {
@@ -52,7 +52,7 @@ public abstract class AbstractServerSocket {
         return new NetEndpoint(inetAddress, port);
     }
     
-    public abstract AbstractServerSocket setServerSocket(ServerSocket serverSocket);
+    public abstract THIS setServerSocket(ServerSocket serverSocket);
     
     protected abstract ServerSocket createServerSocket() throws Exception;
     
