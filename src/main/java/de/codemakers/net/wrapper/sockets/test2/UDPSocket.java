@@ -31,6 +31,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class UDPSocket implements Closeable, Connectable, Resettable, Startable, Stoppable {
     
+    //TODO Make ProcessingStreams, die dann UDPDataPaket oder so annehmen und auf die Reihenfolge achten mit byte oder so als Nummerierung
+    
     public static final int DEFAULT_BUFFER_SIZE = 128;
     
     protected final InetAddress inetAddress;
