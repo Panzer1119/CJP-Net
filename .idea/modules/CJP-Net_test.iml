@@ -9,7 +9,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="CJP-Net_main" />
-    <orderEntry type="library" name="Gradle: com.github.Panzer1119:CJP-Base:d55a1d52" level="project" />
+    <orderEntry type="library" name="Gradle: com.github.Panzer1119:CJP-Base:c054d0d1" level="project" />
     <orderEntry type="library" name="Gradle: mysql:mysql-connector-java:8.0.16" level="project" />
     <orderEntry type="library" name="Gradle: junit:junit:4.12" level="project" />
     <orderEntry type="library" name="Gradle: org.reflections:reflections:0.9.11" level="project" />
